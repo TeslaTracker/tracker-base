@@ -56,6 +56,14 @@ describe('Testing files duplication cleanup', function () {
   it('should NOT cleanup non duplicated files name', () => {
     expect(cleanupFile(`<link ref="icon" href="favicon_toto.png">`)).to.be.equal;
   });
+
+  it('should NOT cleanup basic css class name', () => {
+    expect(cleanupFile(`<div class="tds-flex-item tds-flex--col_1of3">`)).to.be.equal;
+  });
+
+  it('should NOT cleanup basic a div id or params', () => {
+    expect(cleanupFile(`<div id="showcase--MzndJR_N_8w" data-gtm-drawer="showcase--MzndJR_N_8w">`)).to.be.equal;
+  });
 });
 
 describe('Testing nonce param cleanup', function () {
