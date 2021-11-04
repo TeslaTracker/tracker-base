@@ -27,7 +27,7 @@ jobs:
       - name: yarn start
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GIT_USER_NAME: tesla-tracker
-          GIT_USER_EMAIL: cyriaquedelaunay@gmail.com
+          GIT_USER_NAME: ${{ secrets.GIT_USER_NAME }}
+          GIT_USER_EMAIL: ${{ secrets.GIT_USER_EMAIL }}
         run: |
           yarn start
