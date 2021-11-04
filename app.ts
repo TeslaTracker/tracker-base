@@ -24,7 +24,7 @@ config.sources.forEach((source) => {
       result.forEach((item) => {
         console.log(colors.cyan(`Scrapped ${colors.white(String(item.url))}`));
       });
-      // await prettyCode(source);
+      await prettyCode(source);
       await commitFiles(source);
     });
   });
