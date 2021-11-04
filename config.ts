@@ -9,6 +9,7 @@ const defaultOptions: Options = {
   },
   directory: __dirname + '/scrap',
   recursive: true,
+  maxDepth: 3,
   ignoreErrors: true,
   plugins: [new SaveToExistingDirectoryPlugin()],
 };

@@ -39,4 +39,8 @@ describe('Testing URL filtering', function () {
   it('should explore an url that is part of a another subdomain if specified', () => {
     expect(shouldScrape('https://cdn.google.com/test', 'https://google.com')).to.equal(true);
   });
+
+  it('should explore a raw file path', () => {
+    expect(shouldScrape('image.png', 'https://tesla.com')).to.equal(true);
+  });
 });
