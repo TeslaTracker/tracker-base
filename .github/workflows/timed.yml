@@ -1,0 +1,32 @@
+name: Track changes
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # https://crontab.guru/#0_*/6_*_*_*
+    - cron:  '0 */6 * * *'
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15
+
+      - name: Yarn install
+        run: |
+          yarn
+
+      - name: yarn start
+        env:
+          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          yarn start
