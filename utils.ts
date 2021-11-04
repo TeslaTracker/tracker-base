@@ -1,11 +1,13 @@
-export function shouldScrape(url: string): boolean {
+export function shouldScrape(url: string, baseDomain: string): boolean {
+  let domain = new URL(baseDomain);
+
   // test xx_xx for sub lang domains
-  const langRegex = new RegExp('tesla.com/[a-z][a-z]_[a-z][a-z]');
+  const langRegex = new RegExp(`${domain.hostname}/[a-z][a-z]_[a-z][a-z]`);
   if (langRegex.test(url)) {
     return false;
   }
 
-  const cnRegex = new RegExp('tesla.com');
+  const cnRegex = new RegExp(`${domain.hostname}`);
   if (!cnRegex.test(url)) {
     return false;
   }

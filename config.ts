@@ -5,13 +5,12 @@ import { shouldScrape } from './utils';
 const defaultOptions: Options = {
   urls: ['https://www.tesla.com'],
   urlFilter: function (url) {
-    return shouldScrape(url);
+    return shouldScrape(url, 'https://www.tesla.com');
   },
   directory: __dirname + '/scrap',
   recursive: true,
   ignoreErrors: true,
   plugins: [new SaveToExistingDirectoryPlugin()],
-  filenameGenerator: 'bySiteStructure',
 };
 const config: IConfig = {
   protectedFiles: ['README.md', '.git', '.gitignore'],

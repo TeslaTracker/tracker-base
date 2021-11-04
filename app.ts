@@ -6,7 +6,9 @@ import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 import moment from 'moment';
-import { cleanupFile } from './utils';
+import { cleanupFile, shouldScrape } from './utils';
+import recursive from 'recursive-readdir';
+import path from 'path';
 
 const isDev = process.env.DEV;
 const dummyDomain = 'https://cyriaque.net';
@@ -28,6 +30,9 @@ config.sources.forEach((source, sourceIndex) => {
     if (isDev) {
       url = 'https://cyriaque.net';
       config.sources[sourceIndex].options.urls = [url];
+      config.sources[sourceIndex].options.urlFilter = function (url) {
+        return shouldScrape(url, url);
+      };
     }
 
     await cloneAndPrepareRepo(source);
@@ -39,6 +44,7 @@ config.sources.forEach((source, sourceIndex) => {
       result.forEach((item) => {
         console.log(colors.cyan(`Scrapped ${colors.white(String(item.url))}`));
       });
+
       await cleanupFiles(source);
       await prettyCode(source);
       await commitFiles(source);
@@ -52,10 +58,19 @@ config.sources.forEach((source, sourceIndex) => {
 async function cleanupFiles(source: ISource) {
   console.log(colors.cyan(`Cleaning up files...`));
   const dir = `temp/${source.folderName}`;
-  const files = await readdir(dir);
+  const files = await recursive(dir, config.protectedFiles);
 
   files.forEach(async (file) => {
-    const filePath = `${dir}/${file}`;
+    const acceptedFiles = ['.css', '.js', '.html'];
+
+    const filePath = `${file}`;
+    const fileExt = path.extname(filePath);
+
+    // ignore if it is not a supported file
+    if (!acceptedFiles.includes(fileExt)) {
+      return;
+    }
+
     const fileContent = await readFile(filePath, 'utf-8');
 
     const updatedContent = cleanupFile(fileContent);
