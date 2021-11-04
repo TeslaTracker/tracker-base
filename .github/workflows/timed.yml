@@ -8,7 +8,7 @@ on:
     # https://crontab.guru/#0_*/6_*_*_*
     - cron:  '0 */6 * * *'
 jobs:
-  stale:
+  run-tracker:
     runs-on: ubuntu-latest
   
     steps:
