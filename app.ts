@@ -13,14 +13,6 @@ if (!process.env.GH_TOKEN) {
   throw new Error(colors.red('MISSING GH_TOKEN env var'));
 }
 
-if (!process.env.GIT_USER_NAME) {
-  throw new Error(colors.red('MISSING GIT_USER_NAME env var'));
-}
-
-if (!process.env.GIT_USER_EMAIL) {
-  throw new Error(colors.red('MISSING GIT_USER_EMAIL env var'));
-}
-
 config.sources.forEach((source) => {
   source.options.urls.forEach(async (url) => {
     await cloneAndPrepareRepo(source);
