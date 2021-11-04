@@ -10,7 +10,7 @@ Base for the Tesla website tracking
 
 The config is available in `config.ts`
 
-Make your `GITHUB_TOKEN` available as an environment variable ([see how](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token))
+Make your `GH_TOKEN` available as an environment variable ([see how](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token))
 
 ## Scripts
 
