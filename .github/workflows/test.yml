@@ -1,0 +1,22 @@
+name: Unit testing
+on:
+  push
+jobs:
+  run-tracker:
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15
+
+      - name: Yarn install
+        run: |
+          yarn
+      - name: yarn test
+        run: |
+          yarn test
