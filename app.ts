@@ -88,5 +88,5 @@ async function commitFiles(source: ISource) {
   console.log(colors.cyan(`Commit: ${colors.white(commitMessage)}`));
   await git.commit(commitMessage);
   console.log(colors.cyan(`Pushing...`));
-  await git.push('origin', 'master');
+  await git.push('origin', 'master', ['--force']);
 }
