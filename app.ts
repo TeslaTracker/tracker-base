@@ -30,24 +30,6 @@ config.sources.forEach((source) => {
   });
 });
 
-/**
- * Remove all files from the folder
- * except thoses who are in the exclude list (config.protectedFiles)
- * @param folderPath
- */
-async function cleanupTrackingFolder(folderPath: string) {
-  console.log(colors.cyan(`Cleaning up repo before scraping ...`));
-  const files = await readdir(folderPath);
-  files.forEach(async (file) => {
-    // ignore if the file is protected
-    if (config.protectedFiles.includes(file)) {
-      return;
-    }
-    // delete the file
-    await rm(`${folderPath}/${file}`, { recursive: true, force: true });
-  });
-}
-
 async function prettyCode(source: ISource): Promise<void> {
   console.log(colors.cyan(`Prettifying code using ${colors.white('Prettier')}...`));
 
@@ -66,6 +48,24 @@ async function prettyCode(source: ISource): Promise<void> {
   });
 }
 
+/**
+ * Remove all files from the folder
+ * except thoses who are in the exclude list (config.protectedFiles)
+ * @param folderPath
+ */
+async function cleanupTrackingFolder(folderPath: string) {
+  console.log(colors.cyan(`Cleaning up repo before scraping ...`));
+  const files = await readdir(folderPath);
+  files.forEach(async (file) => {
+    // ignore if the file is protected
+    if (config.protectedFiles.includes(file)) {
+      return;
+    }
+    // delete the file
+    await rm(`${folderPath}/${file}`, { recursive: true, force: true });
+  });
+}
+
 async function cloneAndPrepareRepo(source: ISource) {
   const repoUrl = `https://${process.env.GH_TOKEN}@${source.repoUrl}`;
   // remove the folder if it already exists
@@ -80,9 +80,13 @@ async function cloneAndPrepareRepo(source: ISource) {
 }
 
 async function commitFiles(source: ISource) {
-  console.log(colors.cyan(`Commiting files to ${colors.white(String(source.repoUrl))}...`));
+  console.log(colors.cyan(`Preparing to commit files to ${colors.white(String(source.repoUrl))}...`));
   await git.cwd('temp/' + source.folderName);
   await git.add('./*');
-  await git.commit(`update from ${moment().format('MMMM Do YYYY, h:mm:ss a')} `);
+
+  const commitMessage = `update from ${moment().format('MMMM Do YYYY, h:mm:ss a')} `;
+  console.log(colors.cyan(`Commit: ${colors.white(commitMessage)}`));
+  await git.commit(commitMessage);
+  console.log(colors.cyan(`Pushing...`));
   await git.push('origin', 'master');
 }
