@@ -82,6 +82,7 @@ async function cloneAndPrepareRepo(source: ISource) {
 async function commitFiles(source: ISource) {
   console.log(colors.cyan(`Commiting files to ${colors.white(String(source.repoUrl))}...`));
   await git.cwd('temp/' + source.folderName);
+  await git.add('./*');
   await git.commit(`update from ${moment().format('MMMM Do YYYY, h:mm:ss a')} `);
   await git.push('origin', 'master');
 }
