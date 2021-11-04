@@ -12,3 +12,15 @@ export function shouldScrape(url: string): boolean {
 
   return true;
 }
+
+export function cleanupFile(content: string): string {
+  // replace favicon_1.png with favicon.png
+  const duplicatedFileRegex = new RegExp(`_[0-9].`, 'gm');
+  content = content.replace(duplicatedFileRegex, '.');
+
+  // remove the nonce parameter from the script tags
+  const nonceRegex = new RegExp(` nonce="(.)*?"`, 'gm');
+  content = content.replace(nonceRegex, '');
+
+  return content;
+}

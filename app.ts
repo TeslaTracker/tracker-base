@@ -1,11 +1,13 @@
 import scrape from 'website-scraper'; // only as ESM, no CommonJS
 import config from './config';
-import { rm, readdir, pathExists } from 'fs-extra';
+import { rm, readdir, pathExists, readFile, writeFile } from 'fs-extra';
 import colors from 'colors';
 import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 import moment from 'moment';
+import { cleanupFile } from './utils';
+
 const isDev = process.env.DEV;
 const dummyDomain = 'https://cyriaque.net';
 console.log('Starting scrap process...');
@@ -37,11 +39,30 @@ config.sources.forEach((source, sourceIndex) => {
       result.forEach((item) => {
         console.log(colors.cyan(`Scrapped ${colors.white(String(item.url))}`));
       });
+      await cleanupFiles(source);
       await prettyCode(source);
       await commitFiles(source);
     });
   });
 });
+
+/**
+ * Try to detect rng and duplicated values and clean them
+ */
+async function cleanupFiles(source: ISource) {
+  console.log(colors.cyan(`Cleaning up files...`));
+  const dir = `temp/${source.folderName}`;
+  const files = await readdir(dir);
+
+  files.forEach(async (file) => {
+    const filePath = `${dir}/${file}`;
+    const fileContent = await readFile(filePath, 'utf-8');
+
+    const updatedContent = cleanupFile(fileContent);
+
+    await writeFile(filePath, updatedContent);
+  });
+}
 
 async function prettyCode(source: ISource): Promise<void> {
   console.log(colors.cyan(`Prettifying code using ${colors.white('Prettier')}...`));
