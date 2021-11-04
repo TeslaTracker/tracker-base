@@ -1,4 +1,4 @@
-name: Track changes
+name: Tracker - Tesla Website
 on:
   push:
     branches:
