@@ -7,6 +7,8 @@ import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 console.log('Starting scrap process...');
 const git = simpleGit();
+git.addConfig('user.name', 'tesla-tracker');
+git.addConfig('user.email', '<>');
 
 if (!process.env.GITHUB_TOKEN) {
   throw new Error(colors.red('MISSING GITHUB_TOKEN env var'));
