@@ -11,7 +11,7 @@ const defaultOptions: Options = {
   recursive: true,
   ignoreErrors: true,
   plugins: [new SaveToExistingDirectoryPlugin()],
-  maxRecursiveDepth: 2,
+  filenameGenerator: 'bySiteStructure',
 };
 const config: IConfig = {
   protectedFiles: ['README.md', '.git', '.gitignore'],
