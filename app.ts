@@ -6,6 +6,8 @@ import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 import moment from 'moment';
+const isDev = process.env.DEV;
+const dummyDomain = 'https://cyriaque.net';
 console.log('Starting scrap process...');
 const git = simpleGit();
 
@@ -13,8 +15,19 @@ if (!process.env.GH_TOKEN) {
   throw new Error(colors.red('MISSING GH_TOKEN env var'));
 }
 
-config.sources.forEach((source) => {
+if (isDev) {
+  console.log(colors.yellow(`-- Dev mode enabled --`));
+  console.log(`${colors.cyan(`🛈 ${colors.white(dummyDomain)} will be scrapped instead and changes won't be pushed`)}`);
+}
+
+config.sources.forEach((source, sourceIndex) => {
   source.options.urls.forEach(async (url) => {
+    // dummy url for dev mode
+    if (isDev) {
+      url = 'https://cyriaque.net';
+      config.sources[sourceIndex].options.urls = [url];
+    }
+
     await cloneAndPrepareRepo(source);
     // update the scrap options to use the folder name
     source.options.directory = 'temp/' + source.folderName;
@@ -84,9 +97,21 @@ async function commitFiles(source: ISource) {
   await git.cwd('temp/' + source.folderName);
   await git.add('./*');
 
-  const commitMessage = `update from ${moment().format('MMMM Do YYYY, h:mm:ss a')} `;
+  const commitMessage = await generateCommitMessage();
+
   console.log(colors.cyan(`Commit: ${colors.white(commitMessage)}`));
   await git.commit(commitMessage);
+  if (isDev) {
+    console.log(colors.cyan(`${colors.white('Dev-mode')} ignoring push`));
+    return;
+  }
   console.log(colors.cyan(`Pushing...`));
   await git.push('origin', 'master', ['--force']);
+}
+
+async function generateCommitMessage() {
+  const diffMessage = await git.diff(['--cached', '--shortstat']);
+  let commitMessage = `${diffMessage} - ${moment().format('MMM Do YYYY, h:mm:ss a')} `;
+  commitMessage = commitMessage.split('\n').join('');
+  return commitMessage;
 }
