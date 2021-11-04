@@ -5,6 +5,7 @@ import colors from 'colors';
 import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
+import moment from 'moment';
 console.log('Starting scrap process...');
 const git = simpleGit();
 git.addConfig('user.name', 'tesla-tracker');
@@ -83,7 +84,6 @@ async function cloneAndPrepareRepo(source: ISource) {
 async function commitFiles(source: ISource) {
   console.log(colors.cyan(`Commiting files to ${colors.white(String(source.repoUrl))}...`));
   await git.cwd('temp/' + source.folderName);
-  await git.add('.');
-  await git.commit(`Update from ${new Date()} `);
+  await git.commit(`update from ${moment().format('MMMM Do YYYY, h:mm:ss a')} `);
   await git.push('origin', 'master');
 }
