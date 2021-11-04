@@ -17,3 +17,7 @@ Make your `GITHUB_TOKEN` available as an environment variable ([see how](https:/
 ### `yarn start`
 
 - Run the scrapper
+
+### `yarn start-env`
+
+- Run the scrapper but get the environment variables from the .env file

@@ -9,8 +9,16 @@ import moment from 'moment';
 console.log('Starting scrap process...');
 const git = simpleGit();
 
-if (!process.env.GITHUB_TOKEN) {
-  throw new Error(colors.red('MISSING GITHUB_TOKEN env var'));
+if (!process.env.GH_TOKEN) {
+  throw new Error(colors.red('MISSING GH_TOKEN env var'));
+}
+
+if (!process.env.GIT_USER_NAME) {
+  throw new Error(colors.red('MISSING GIT_USER_NAME env var'));
+}
+
+if (!process.env.GIT_USER_EMAIL) {
+  throw new Error(colors.red('MISSING GIT_USER_EMAIL env var'));
 }
 
 initGIt().then(() => {
@@ -33,8 +41,8 @@ initGIt().then(() => {
 });
 
 async function initGIt() {
-  await git.addConfig('user.name', 'tesla-tracker', false, 'global');
-  await git.addConfig('user.email', '<>', false, 'global');
+  await git.addConfig('user.name', String(process.env.GIT_USER_NAME), false, 'global');
+  await git.addConfig('user.email', String(process.env.GIT_USER_EMAIL), false, 'global');
   const user = await git.getConfig('user.name');
   const email = await git.getConfig('user.email');
   console.log(colors.cyan(`Config set :`));
@@ -79,7 +87,7 @@ async function prettyCode(source: ISource): Promise<void> {
 }
 
 async function cloneAndPrepareRepo(source: ISource) {
-  const repoUrl = `https://${process.env.GITHUB_TOKEN}@${source.repoUrl}`;
+  const repoUrl = `https://${process.env.GH_TOKEN}@${source.repoUrl}`;
   // remove the folder if it already exists
   if (await pathExists('temp/' + source.folderName)) {
     console.log(colors.cyan(`Cleaning up existing folder:  ${colors.white(String('temp/' + source.folderName))}...`));
