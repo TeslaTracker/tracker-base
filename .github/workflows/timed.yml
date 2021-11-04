@@ -23,7 +23,11 @@ jobs:
       - name: Yarn install
         run: |
           yarn
-
+      - name: setup git config
+        run: |
+          # setup the username and email
+          git config user.name "Tesla Tracker"
+          git config user.email "<>"
       - name: yarn start
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

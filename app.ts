@@ -21,34 +21,22 @@ if (!process.env.GIT_USER_EMAIL) {
   throw new Error(colors.red('MISSING GIT_USER_EMAIL env var'));
 }
 
-initGIt().then(() => {
-  config.sources.forEach((source) => {
-    source.options.urls.forEach(async (url) => {
-      await cloneAndPrepareRepo(source);
-      // update the scrap options to use the folder name
-      source.options.directory = 'temp/' + source.folderName;
+config.sources.forEach((source) => {
+  source.options.urls.forEach(async (url) => {
+    await cloneAndPrepareRepo(source);
+    // update the scrap options to use the folder name
+    source.options.directory = 'temp/' + source.folderName;
 
-      console.log(colors.cyan(`Scrapping from ${colors.white(String(url))}...`));
-      scrape(source.options).then(async (result) => {
-        result.forEach((item) => {
-          console.log(colors.cyan(`Scrapped ${colors.white(String(item.url))}`));
-        });
-        // await prettyCode(source);
-        await commitFiles(source);
+    console.log(colors.cyan(`Scrapping from ${colors.white(String(url))}...`));
+    scrape(source.options).then(async (result) => {
+      result.forEach((item) => {
+        console.log(colors.cyan(`Scrapped ${colors.white(String(item.url))}`));
       });
+      // await prettyCode(source);
+      await commitFiles(source);
     });
   });
 });
-
-async function initGIt() {
-  await git.addConfig('user.name', String(process.env.GIT_USER_NAME), false, 'global');
-  await git.addConfig('user.email', String(process.env.GIT_USER_EMAIL), false, 'global');
-  const user = await git.getConfig('user.name');
-  const email = await git.getConfig('user.email');
-  console.log(colors.cyan(`Config set :`));
-  console.log(colors.cyan(`user.name: ${colors.white(String(user.value))}`));
-  console.log(colors.cyan(`user.email: ${colors.white(String(email.value))}`));
-}
 
 /**
  * Remove all files from the folder
