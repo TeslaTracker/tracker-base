@@ -26,7 +26,6 @@ jobs:
 
       - name: yarn start
         env:
-          GITHUB_USERNAME: ${{ secrets.GITHUB_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yarn start

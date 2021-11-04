@@ -8,8 +8,8 @@ import { ISource } from './interfaces/config.interface';
 console.log('Starting scrap process...');
 const git = simpleGit();
 
-if (!process.env.GITHUB_USERNAME || !process.env.GITHUB_TOKEN) {
-  throw new Error(colors.red('MISSING one or more .env keys (see .env.example)'));
+if (!process.env.GITHUB_TOKEN) {
+  throw new Error(colors.red('MISSING GITHUB_TOKEN env var'));
 }
 
 config.sources.forEach((source) => {
@@ -66,7 +66,7 @@ async function prettyCode(source: ISource): Promise<void> {
 }
 
 async function cloneAndPrepareRepo(source: ISource) {
-  const repoUrl = `https://${process.env.GITHUB_USERNAME}:${process.env.GITHUB_TOKEN}@${source.repoUrl}`;
+  const repoUrl = `https://${process.env.GITHUB_TOKEN}@${source.repoUrl}`;
   // remove the folder if it already exists
   if (await pathExists('temp/' + source.folderName)) {
     console.log(colors.cyan(`Cleaning up existing folder:  ${colors.white(String('temp/' + source.folderName))}...`));
