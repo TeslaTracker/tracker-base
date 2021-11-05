@@ -1,4 +1,4 @@
-import { cleanupFile, shouldScrape } from '../utils';
+import { cleanupFile } from '../utils';
 import { expect } from 'chai';
 
 const baseFileContent = `

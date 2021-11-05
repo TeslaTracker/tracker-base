@@ -1,29 +1,49 @@
-export function shouldScrape(url: string, baseDomain: string): boolean {
-  let domain = new URL(baseDomain);
-  let parsedUrl;
+import { findIndex } from 'lodash';
+import { ISource } from './interfaces/config.interface';
 
-  // test if this is a local path file
-  try {
-    parsedUrl = new URL(url);
-  } catch (error) {
-    // url might be a local file path (ex: favicon.png)
-    // so we accept it
-    return true;
+export function generateUrlsList(source: ISource): string[] {
+  let urls: string[] = [];
+  source.urls.forEach((url) => {
+    urls = urls.concat(hydrateUrl(url, source));
+  });
+  return urls;
+}
+
+function hydrateUrl(url: string, source: ISource): string[] {
+  const variableRegex = new RegExp('%(.*?)%', 'g');
+  let urls: string[] = [];
+  // list all parameters in the url
+  const urlVariables = url.match(variableRegex);
+
+  // if there is not match, the url is complete => return it
+  if (!urlVariables) {
+    return [url];
   }
 
-  // test xx_xx for sub lang domains
-  const langRegex = new RegExp(`${domain.hostname}/[a-z][a-z]_[a-z][a-z]`);
-  if (langRegex.test(url)) {
-    return false;
-  }
+  // loop through all parameters
+  if (source.variables && urlVariables) {
+    urlVariables.forEach((variableMatch) => {
+      // %toto% => toto
+      const match = variableMatch.replace('%', '').replace('%', '');
 
-  // test for current domain
-  const cnRegex = new RegExp(`${domain.hostname}`);
-  if (!cnRegex.test(url)) {
-    return false;
-  }
+      const variableIndex = findIndex(source.variables, { name: match });
 
-  return true;
+      // skip if the variable don't exist in the source
+      if (!~variableIndex) {
+        urls.push(url);
+        return urls;
+      }
+
+      const variableValues = source.variables[variableIndex].values;
+
+      // ex: en_EN - fr_FR
+      for (const value of variableValues) {
+        const baseUrl = url.replace(variableMatch, value);
+        urls = urls.concat(hydrateUrl(baseUrl, source));
+      }
+    });
+  }
+  return urls;
 }
 
 export function cleanupFile(content: string): string {
