@@ -1,14 +1,16 @@
-import scrape from 'website-scraper'; // only as ESM, no CommonJS
 import config from './config';
-import { rm, readdir, pathExists, readFile, writeFile } from 'fs-extra';
+import { rm, readdir, pathExists, readFile, writeFile, ensureFile, appendFile } from 'fs-extra';
 import colors from 'colors';
 import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 import moment from 'moment';
-import { cleanupFile, shouldScrape } from './utils';
+import { cleanupFile, generateUrlsList } from './utils';
 import recursive from 'recursive-readdir';
 import path from 'path';
+import Puppeteer from 'puppeteer';
+import IPageProcessResponse from './interfaces/pageProcessResponse.interface';
+import { Cluster } from 'puppeteer-cluster';
 
 const isDev = process.env.DEV;
 const dummyDomain = 'https://cyriaque.net';
@@ -24,32 +26,70 @@ if (isDev) {
   console.log(`${colors.cyan(`🛈 ${colors.white(dummyDomain)} will be scrapped instead and changes won't be pushed`)}`);
 }
 
-config.sources.forEach((source, sourceIndex) => {
-  source.options.urls.forEach(async (url) => {
-    // dummy url for dev mode
-    if (isDev) {
-      url = 'https://cyriaque.net';
-      config.sources[sourceIndex].options.urls = [url];
-      config.sources[sourceIndex].options.urlFilter = function (url) {
-        return shouldScrape(url, url);
-      };
+config.sources.forEach(async (source) => {
+  await cleanupTrackingFolder('temp/' + source.folderName);
+
+  const urlsList = generateUrlsList(source);
+
+  const availablePages: string[] = [];
+
+  // Create a cluster with 2 workers
+  const cluster = await Cluster.launch({
+    concurrency: Cluster.CONCURRENCY_CONTEXT,
+    maxConcurrency: 5,
+    puppeteerOptions: {},
+  });
+
+  // Define a task (in this case: screenshot of page)
+  await cluster.task(async ({ page, data: url }) => {
+    console.log(colors.cyan(`Processing ${colors.white(url)}...`));
+    const response = await page.goto(url);
+
+    if (response.status() !== 200) {
+      console.log(colors.yellow(`Not available (${response.status()}) ${colors.white(url)}`));
+      return;
     }
 
-    await cloneAndPrepareRepo(source);
-    // update the scrap options to use the folder name
-    source.options.directory = 'temp/' + source.folderName;
+    await page.waitForSelector('body');
+    let bodyHTML = await page.evaluate(() => document.body.innerHTML);
+    // temp/name/fr_FR/about.html
+    const { protocol, hostname } = new URL(url);
+    const fileName = url.replace(`${protocol}//${hostname}`, '');
 
-    console.log(colors.cyan(`Scrapping from ${colors.white(String(url))}...`));
-    scrape(source.options).then(async (result) => {
-      result.forEach((item) => {
-        console.log(colors.cyan(`Scrapped ${colors.white(String(item.url))}`));
-      });
+    const filePath = `temp/${config.sources[0].folderName}/${fileName}.html`;
 
-      await cleanupFiles(source);
-      await prettyCode(source);
-      await commitFiles(source);
-    });
+    // ensure the folder hierarchy
+    await ensureFile(filePath);
+
+    // write the body content in a file
+    await writeFile(filePath, bodyHTML);
+    await page.close();
+    availablePages.push(filePath);
+    return;
   });
+
+  urlsList.forEach(async (url) => {
+    cluster.queue(url);
+  });
+
+  await cluster.idle();
+  await cluster.close();
+
+  console.log(colors.cyan(`Browsing complete - generating manifest file...`));
+
+  const manifestFile = `temp/${source.folderName}/manifest.txt`;
+  await ensureFile(manifestFile);
+  //sort the result array for consistency
+  availablePages.sort();
+
+  // log the results into a file
+  availablePages.forEach(async (page) => {
+    // only add the page to the manifest if it was available
+    await appendFile(manifestFile, `${page}\n`);
+  });
+
+  await cleanupFiles(source);
+  await prettyCode(source);
 });
 
 /**

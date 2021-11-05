@@ -23,7 +23,7 @@ const source: ISource = {
   ],
 };
 
-describe('Testing URLs generation with variables parameters', function () {
+describe('Testing URLs generation with variables parameters', () => {
   it('should generate a list of urls for one parameter', () => {
     // only 1 url that take 1 variable with 2 values
     let source1 = { ...source };
@@ -32,6 +32,8 @@ describe('Testing URLs generation with variables parameters', function () {
   });
 
   it('should generate a list of urls for multiple parameters', () => {
+    let source1 = { ...source };
+    source1.urls = [source1.urls[1]];
     const res = generateUrlsList(source);
     expect(res).lengthOf(50);
     expect(res).to.contain('https://test-url.com/fr_FR/user/ElonMusk?debug=false');
