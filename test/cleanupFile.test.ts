@@ -16,7 +16,13 @@ const baseFileContent = `
       <span>Lorem ipsum</span>
       </p>
     </div>
-    <script src="script.js" nonce="dYdsmmm4854%cfedzfefef014"></script>
+    <script src="script.js" nonce="dYdsmmm4854%cfedzfefef014">
+    {
+      user: {
+        "permissionsHash": "233257b7076c6aa824ac0fa7abdd775c42bdb2ebf0cb4a37d3eaeedfd222a7d7"
+      }
+    }
+    </script>
   </body>
 </html>
 `;
@@ -36,7 +42,13 @@ const cleanedFileContent = `
       <span>Lorem ipsum</span>
       </p>
     </div>
-    <script src="script.js"></script>
+    <script src="script.js">
+    {
+      user: {
+        "permissionsHash": ""
+      }
+    }
+    </script>
   </body>
 </html>
 `;
@@ -79,6 +91,12 @@ describe('Testing nonce param cleanup', () => {
 
   it('should NOT change script tags if there is no nonce tag', () => {
     expect(cleanupFile(`<script src="lorem.js">`)).to.equal;
+  });
+});
+
+describe('Testing permissionHash cleanup', () => {
+  it('should clean up the permission hash', () => {
+    expect(cleanupFile(`"permissionsHash": "233257b7076c6aa824ac0fa7abdd775c42bdb2ebf0cb4a37d3eaeedfd222a7d7"`)).to.equal(`"permissionsHash": ""`);
   });
 });
 

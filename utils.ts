@@ -55,5 +55,9 @@ export function cleanupFile(content: string): string {
   const nonceRegex = new RegExp(` nonce="(.)*?"`, 'gm');
   content = content.replace(nonceRegex, '');
 
+  // remove the permission hash from drupal
+  const permissionHashRegex = new RegExp(`"permissionsHash": "(.)*?"`, 'gm');
+  content = content.replace(permissionHashRegex, '"permissionsHash": ""');
+
   return content;
 }
