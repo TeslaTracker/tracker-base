@@ -1,4 +1,4 @@
-name: Tracker
+name: Run Tracker
 on:
   push:
     branches:
@@ -8,15 +8,28 @@ on:
     # https://crontab.guru/#0_*/6_*_*_*
     - cron:  '0 */6 * * *'
 jobs:
-  tesla-website-fr:
+  run-tracker:
     runs-on: ubuntu-latest
   
     steps:
-      - name: Setup
-        uses: actions/setup
+      - name: Check out Git repository
+        uses: actions/checkout@v1
 
-      - name: track-tesla-website-fr
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15
+
+      - name: Yarn install
+        run: |
+          yarn
+      - name: setup git config
+        run: |
+          # setup the username and email
+          git config --global user.name "Tesla Tracker"
+          git config --global user.email "<>"
+      - name: yarn start
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          yarn start --source tesla-website-fr
+          yarn start
