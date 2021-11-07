@@ -243,9 +243,9 @@ async function commitFiles(source: ISource) {
     return;
   }
 
-  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add .'));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add -A'));
   // add all changes
-  await git.add('.');
+  await git.add('-A');
 
   // create the commit message
   const commitMessage = await generateCommitMessage();
