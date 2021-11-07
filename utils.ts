@@ -101,7 +101,8 @@ export function generateFilePathFromUrl(url: string, source: ISource, contentTyp
  * @returns
  */
 export async function gitHasChanges(git: SimpleGit): Promise<boolean> {
-  const diff = await git.raw(['diff-index', 'HEAD']);
+  const diff = await git.raw(['ls-files', '--deleted', '--modified', '--others', '--exclude-standard']);
+
   if (diff) {
     return true;
   }

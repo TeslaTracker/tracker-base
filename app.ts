@@ -238,13 +238,13 @@ async function commitFiles(source: ISource) {
 
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add .'));
 
-  // add all changes
-  await git.add('-A');
-
   if (!(await gitHasChanges(git))) {
     console.log(`[${colors.magenta(source.name)}]`, colors.cyan('No changes to commit'));
     return;
   }
+
+  // add all changes
+  await git.add('-A');
 
   // create the commit message
   const commitMessage = await generateCommitMessage();
