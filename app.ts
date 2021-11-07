@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 import moment from 'moment';
-import { cleanupFile, generateFilePathFromUrl, generateUrlsList } from './utils';
+import { cleanupFile, generateFilePathFromUrl, generateUrlsList, gitHasChanges } from './utils';
 import recursive from 'recursive-readdir';
 import path from 'path';
 import { Cluster } from 'puppeteer-cluster';
@@ -210,6 +210,7 @@ async function cleanupTrackingFolder(source: ISource, folderPath: string) {
 
 async function cloneAndPrepareRepo(source: ISource) {
   await git.cwd(__dirname);
+
   const repoUrl = `https://${process.env.GH_TOKEN}@${source.repoUrl}`;
   // remove the folder if it already exists
   if (await pathExists('temp/' + source.folderName)) {
@@ -235,8 +236,13 @@ async function commitFiles(source: ISource) {
     await rm('.git/index.lock', { force: true });
   }
 
-  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add *'));
-  await git.add('*');
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add .'));
+  await git.add('.');
+
+  if (!(await gitHasChanges(git))) {
+    console.log(`[${colors.magenta(source.name)}]`, colors.cyan('No changes to commit'));
+    return;
+  }
 
   const commitMessage = await generateCommitMessage();
 
@@ -251,7 +257,12 @@ async function commitFiles(source: ISource) {
 }
 
 async function generateCommitMessage() {
-  const diffMessage = await git.diff(['--cached', '--shortstat']);
+  let diffMessage = await git.diff(['--cached', '--shortstat']);
+
+  if (!diffMessage) {
+    diffMessage = 'No changes detected';
+  }
+
   let commitMessage = `${diffMessage} - ${moment().format('MMM Do YYYY, h:mm:ss a')} `;
   commitMessage = commitMessage.split('\n').join('');
 

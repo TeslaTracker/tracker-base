@@ -2,6 +2,7 @@ import { findIndex } from 'lodash';
 import IConfig, { ISource } from './interfaces/config.interface';
 import mime from 'mime-types';
 import path from 'path';
+import { SimpleGit } from 'simple-git';
 export function generateUrlsList(source: ISource, config: IConfig): string[] {
   let urls: string[] = [];
   source.urls.forEach((url) => {
@@ -92,4 +93,17 @@ export function generateFilePathFromUrl(url: string, source: ISource, contentTyp
     fileName = '/index';
   }
   return `temp/${source.folderName}${fileName}.${ext}`;
+}
+
+/**
+ * Tell wether of not the git instance has changed files
+ * @param git
+ * @returns
+ */
+export async function gitHasChanges(git: SimpleGit): Promise<boolean> {
+  const diff = await git.diff(['--cached', '--shortstat']);
+  if (diff && diff.length > 0) {
+    return true;
+  }
+  return false;
 }
