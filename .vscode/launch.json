@@ -14,7 +14,11 @@
             ],
             "port": 5858,
             "cwd": "${workspaceRoot}",
-            "timeout": 10000
+            "timeout": 10000,
+            "skipFiles": [
+                "${workspaceFolder}/<node_internals>/**",
+                "${workspaceFolder}/node_modules/**"
+                 ]
         },
         {
             "type": "node",
@@ -26,7 +30,10 @@
             ],
             "port": 5858,
             "cwd": "${workspaceRoot}",
-            "timeout": 10000
+            "timeout": 10000,
+            "skipFiles": [
+                "${workspaceFolder}/<node_internals>/**",
+                "${workspaceFolder}/node_modules/**"]
         }
     ]
 }

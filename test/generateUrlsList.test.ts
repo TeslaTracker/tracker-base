@@ -9,6 +9,7 @@ const config: IConfig = {
       folderName: 'test',
       name: 'test Source',
       repoUrl: '',
+      baseUrl: 'https://test-url.com',
       urls: ['https://test-url.com/%lang%/about', 'https://test-url.com/%lang%/user/%username%?debug=%debug%'],
     },
   ],

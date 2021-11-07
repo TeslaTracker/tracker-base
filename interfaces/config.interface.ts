@@ -13,6 +13,11 @@ export interface ISource {
   repoUrl: string;
 
   /**
+   * Base url of the source
+   */
+  baseUrl: string;
+
+  /**
    * A list of urls that will be used
    *
    * Using a %varName% variable will loop through the list of the corresponsing var

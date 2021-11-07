@@ -13,7 +13,22 @@ const config: IConfig = {
     },
     {
       name: 'products',
-      values: ['model3', 'models', 'modely', 'modelx', 'powerwall', 'charging', /** maybe ? lol => */ 'model2', 'modelq', 'model4'],
+      values: [
+        'model3',
+        'models',
+        'modely',
+        'modelx',
+        'powerwall',
+        'solarroof',
+        'solarpanels',
+        'roadster',
+        'charging',
+        'cybertruck',
+        /** futur stuff maybe ? :o) */
+        'model2',
+        'modelq',
+        'model4',
+      ],
     },
   ],
   sources: [

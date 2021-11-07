@@ -1,6 +1,7 @@
 import { findIndex } from 'lodash';
 import IConfig, { ISource } from './interfaces/config.interface';
-
+import mime from 'mime-types';
+import path from 'path';
 export function generateUrlsList(source: ISource, config: IConfig): string[] {
   let urls: string[] = [];
   source.urls.forEach((url) => {
@@ -67,13 +68,28 @@ export function cleanupFile(content: string): string {
  * @param url
  * @param source
  */
-export function generateFilePathFromUrl(url: string, source: ISource): string {
-  const parsedUrl = new URL(url);
-  let fileName = parsedUrl.pathname;
+export function generateFilePathFromUrl(url: string, source: ISource, contentType: string): string {
+  // Note
+
+  // Tesla does not use file extension withing their website but it can be problematic in the futur...
+
+  // // remove existing file extension
+  // const existingExt = path.parse(url).ext;
+  // if (existingExt) {
+  //   url = url.replace(existingExt, '');
+  // }
+
+  const base = source.baseUrl;
+  let ext = mime.extension(contentType);
+
+  if (!ext) {
+    ext = 'txt';
+  }
+
+  let fileName = url.replace(base, '');
   // handle "index" files
   if (!fileName || fileName === '/') {
     fileName = '/index';
   }
-  const filePath = `temp/${source.folderName}${fileName}.html`;
-  return filePath;
+  return `temp/${source.folderName}${fileName}.${ext}`;
 }
