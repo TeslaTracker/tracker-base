@@ -236,14 +236,16 @@ async function commitFiles(source: ISource) {
     await rm('.git/index.lock', { force: true });
   }
 
-  if (!(await gitHasChanges(git))) {
+  if (await gitHasChanges(git)) {
+    console.log(`[${colors.magenta(source.name)}]`, colors.cyan('Changes detected'));
+  } else {
     console.log(`[${colors.magenta(source.name)}]`, colors.cyan('No changes to commit'));
     return;
   }
 
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add .'));
   // add all changes
-  await git.add('-A');
+  await git.add('.');
 
   // create the commit message
   const commitMessage = await generateCommitMessage();
