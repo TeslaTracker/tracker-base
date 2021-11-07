@@ -227,8 +227,16 @@ async function cloneAndPrepareRepo(source: ISource) {
 
 async function commitFiles(source: ISource) {
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Preparing to commit files to ${colors.white(String(source.repoUrl))}...`));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git cwd temp/' + source.folderName));
   await git.cwd('temp/' + source.folderName);
-  await git.add('./*');
+
+  // delete lock file if it exists
+  if (await pathExists('.git/index.lock')) {
+    await rm('.git/index.lock', { force: true });
+  }
+
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add *'));
+  await git.add('*');
 
   const commitMessage = await generateCommitMessage();
 
@@ -246,5 +254,6 @@ async function generateCommitMessage() {
   const diffMessage = await git.diff(['--cached', '--shortstat']);
   let commitMessage = `${diffMessage} - ${moment().format('MMM Do YYYY, h:mm:ss a')} `;
   commitMessage = commitMessage.split('\n').join('');
+
   return commitMessage;
 }
