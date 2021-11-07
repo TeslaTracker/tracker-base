@@ -1,29 +1,50 @@
-export function shouldScrape(url: string, baseDomain: string): boolean {
-  let domain = new URL(baseDomain);
-  let parsedUrl;
+import { findIndex } from 'lodash';
+import IConfig, { ISource } from './interfaces/config.interface';
+import mime from 'mime-types';
+import path from 'path';
+export function generateUrlsList(source: ISource, config: IConfig): string[] {
+  let urls: string[] = [];
+  source.urls.forEach((url) => {
+    urls = urls.concat(hydrateUrl(url, source, config));
+  });
+  return urls;
+}
 
-  // test if this is a local path file
-  try {
-    parsedUrl = new URL(url);
-  } catch (error) {
-    // url might be a local file path (ex: favicon.png)
-    // so we accept it
-    return true;
+function hydrateUrl(url: string, source: ISource, config: IConfig): string[] {
+  const variableRegex = new RegExp('%(.*?)%', 'g');
+  let urls: string[] = [];
+  // list all parameters in the url
+  const urlVariables = url.match(variableRegex);
+
+  // if there is not match, the url is complete => return it
+  if (!urlVariables) {
+    return [url];
   }
 
-  // test xx_xx for sub lang domains
-  const langRegex = new RegExp(`${domain.hostname}/[a-z][a-z]_[a-z][a-z]`);
-  if (langRegex.test(url)) {
-    return false;
-  }
+  // loop through all parameters
+  if (config.variables && urlVariables) {
+    urlVariables.forEach((variableMatch) => {
+      // %toto% => toto
+      const match = variableMatch.replace('%', '').replace('%', '');
 
-  // test for current domain
-  const cnRegex = new RegExp(`${domain.hostname}`);
-  if (!cnRegex.test(url)) {
-    return false;
-  }
+      const variableIndex = findIndex(config.variables, { name: match });
 
-  return true;
+      // skip if the variable don't exist in the source
+      if (!~variableIndex) {
+        urls.push(url);
+        return urls;
+      }
+
+      const variableValues = config.variables[variableIndex].values;
+
+      // ex: en_EN - fr_FR
+      for (const value of variableValues) {
+        const baseUrl = url.replace(variableMatch, value);
+        urls = urls.concat(hydrateUrl(baseUrl, source, config));
+      }
+    });
+  }
+  return urls;
 }
 
 export function cleanupFile(content: string): string {
@@ -35,5 +56,40 @@ export function cleanupFile(content: string): string {
   const nonceRegex = new RegExp(` nonce="(.)*?"`, 'gm');
   content = content.replace(nonceRegex, '');
 
+  // remove the permission hash from drupal
+  const permissionHashRegex = new RegExp(`"permissionsHash": "(.)*?"`, 'gm');
+  content = content.replace(permissionHashRegex, '"permissionsHash": ""');
+
   return content;
+}
+
+/**
+ * Generate a full file path from a given url
+ * @param url
+ * @param source
+ */
+export function generateFilePathFromUrl(url: string, source: ISource, contentType: string): string {
+  // Note
+
+  // Tesla does not use file extension withing their website but it can be problematic in the futur...
+
+  // // remove existing file extension
+  // const existingExt = path.parse(url).ext;
+  // if (existingExt) {
+  //   url = url.replace(existingExt, '');
+  // }
+
+  const base = source.baseUrl;
+  let ext = mime.extension(contentType);
+
+  if (!ext) {
+    ext = 'txt';
+  }
+
+  let fileName = url.replace(base, '');
+  // handle "index" files
+  if (!fileName || fileName === '/') {
+    fileName = '/index';
+  }
+  return `temp/${source.folderName}${fileName}.${ext}`;
 }

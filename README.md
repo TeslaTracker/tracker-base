@@ -23,3 +23,7 @@ Adding a `DEV` environment variable will prevent any real push and use a dummy d
 ### `yarn start-env`
 
 - Run the scrapper but get the environment variables from the .env file
+
+## CLI Options
+
+`-s` `--source` A specific source to process , must match the source's **folderName** property

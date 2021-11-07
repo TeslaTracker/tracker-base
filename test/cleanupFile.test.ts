@@ -1,4 +1,4 @@
-import { cleanupFile, shouldScrape } from '../utils';
+import { cleanupFile } from '../utils';
 import { expect } from 'chai';
 
 const baseFileContent = `
@@ -16,7 +16,13 @@ const baseFileContent = `
       <span>Lorem ipsum</span>
       </p>
     </div>
-    <script src="script.js" nonce="dYdsmmm4854%cfedzfefef014"></script>
+    <script src="script.js" nonce="dYdsmmm4854%cfedzfefef014">
+    {
+      user: {
+        "permissionsHash": "233257b7076c6aa824ac0fa7abdd775c42bdb2ebf0cb4a37d3eaeedfd222a7d7"
+      }
+    }
+    </script>
   </body>
 </html>
 `;
@@ -36,12 +42,18 @@ const cleanedFileContent = `
       <span>Lorem ipsum</span>
       </p>
     </div>
-    <script src="script.js"></script>
+    <script src="script.js">
+    {
+      user: {
+        "permissionsHash": ""
+      }
+    }
+    </script>
   </body>
 </html>
 `;
 
-describe('Testing files duplication cleanup', function () {
+describe('Testing files duplication cleanup', () => {
   it('should cleanup duplicated files name', () => {
     expect(cleanupFile(`<link ref="icon" href="favicon_5.png">`)).to.equal(`<link ref="icon" href="favicon.png">`);
   });
@@ -66,7 +78,7 @@ describe('Testing files duplication cleanup', function () {
   });
 });
 
-describe('Testing nonce param cleanup', function () {
+describe('Testing nonce param cleanup', () => {
   it('should clean up nonce tag in script tags', () => {
     expect(cleanupFile(`<script src="lorem.js" nonce="14Pm%5669jY">`)).to.equal(`<script src="lorem.js">`);
   });
@@ -82,7 +94,13 @@ describe('Testing nonce param cleanup', function () {
   });
 });
 
-describe('Testing all cleanups', function () {
+describe('Testing permissionHash cleanup', () => {
+  it('should clean up the permission hash', () => {
+    expect(cleanupFile(`"permissionsHash": "233257b7076c6aa824ac0fa7abdd775c42bdb2ebf0cb4a37d3eaeedfd222a7d7"`)).to.equal(`"permissionsHash": ""`);
+  });
+});
+
+describe('Testing all cleanups', () => {
   it('should do all cleanups in one string', () => {
     expect(cleanupFile(baseFileContent)).to.equal(cleanedFileContent);
   });

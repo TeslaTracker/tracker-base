@@ -28,8 +28,3 @@ jobs:
           # setup the username and email
           git config --global user.name "Tesla Tracker"
           git config --global user.email "<>"
-      - name: yarn start
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          yarn start

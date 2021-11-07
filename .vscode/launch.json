@@ -1,0 +1,39 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Yarn start",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": [
+                "start-env"
+            ],
+            "port": 5858,
+            "cwd": "${workspaceRoot}",
+            "timeout": 10000,
+            "skipFiles": [
+                "${workspaceFolder}/<node_internals>/**",
+                "${workspaceFolder}/node_modules/**"
+                 ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Yarn test",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": [
+                "test"
+            ],
+            "port": 5858,
+            "cwd": "${workspaceRoot}",
+            "timeout": 10000,
+            "skipFiles": [
+                "${workspaceFolder}/<node_internals>/**",
+                "${workspaceFolder}/node_modules/**"]
+        }
+    ]
+}

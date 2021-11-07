@@ -1,14 +1,23 @@
-import scrape from 'website-scraper'; // only as ESM, no CommonJS
 import config from './config';
-import { rm, readdir, pathExists, readFile, writeFile } from 'fs-extra';
+import { rm, readdir, pathExists, readFile, writeFile, ensureFile, appendFile, ensureDir } from 'fs-extra';
 import colors from 'colors';
 import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 import moment from 'moment';
-import { cleanupFile, shouldScrape } from './utils';
+import { cleanupFile, generateFilePathFromUrl, generateUrlsList } from './utils';
 import recursive from 'recursive-readdir';
 import path from 'path';
+import { Cluster } from 'puppeteer-cluster';
+import { Command } from 'commander';
+import { findIndex } from 'lodash';
+const program = new Command();
+
+program.option('-s, --source <source>', 'Specify the source to process', '');
+
+program.parse(process.argv);
+
+const options = program.opts();
 
 const isDev = process.env.DEV;
 const dummyDomain = 'https://cyriaque.net';
@@ -21,42 +30,118 @@ if (!process.env.GH_TOKEN) {
 
 if (isDev) {
   console.log(colors.yellow(`-- Dev mode enabled --`));
-  console.log(`${colors.cyan(`🛈 ${colors.white(dummyDomain)} will be scrapped instead and changes won't be pushed`)}`);
+  console.log(`${colors.cyan(`🛈 Changes won't be pushed`)}`);
 }
 
-config.sources.forEach((source, sourceIndex) => {
-  source.options.urls.forEach(async (url) => {
-    // dummy url for dev mode
-    if (isDev) {
-      url = 'https://cyriaque.net';
-      config.sources[sourceIndex].options.urls = [url];
-      config.sources[sourceIndex].options.urlFilter = function (url) {
-        return shouldScrape(url, url);
-      };
-    }
+// set the selected sourc if provided in CLI
+let selectedSources = config.sources;
 
-    await cloneAndPrepareRepo(source);
-    // update the scrap options to use the folder name
-    source.options.directory = 'temp/' + source.folderName;
+if (options.source) {
+  const sourceIndex = findIndex(config.sources, { folderName: options.source });
+  if (~sourceIndex) {
+    selectedSources = [config.sources[sourceIndex]];
+  }
+}
 
-    console.log(colors.cyan(`Scrapping from ${colors.white(String(url))}...`));
-    scrape(source.options).then(async (result) => {
-      result.forEach((item) => {
-        console.log(colors.cyan(`Scrapped ${colors.white(String(item.url))}`));
-      });
+processSources(selectedSources);
 
-      await cleanupFiles(source);
-      await prettyCode(source);
-      await commitFiles(source);
-    });
+async function processSources(sources: ISource[]) {
+  console.log(`Active sources :`);
+  sources.forEach((source) => {
+    console.log(`${colors.magenta(source.name)}`);
   });
-});
+
+  for (const source of sources) {
+    await processSource(source);
+  }
+}
+
+function processSource(source: ISource): Promise<void> {
+  return new Promise(async (resolve) => {
+    await cloneAndPrepareRepo(source);
+
+    const urlsList = generateUrlsList(source, config);
+
+    const availablePages: string[] = [];
+
+    // Create a cluster with 2 workers
+    const cluster = await Cluster.launch({
+      concurrency: Cluster.CONCURRENCY_CONTEXT,
+      maxConcurrency: 5,
+      puppeteerOptions: {},
+    });
+
+    // Define a task (in this case: screenshot of page)
+    await cluster.task(async ({ page, data: url }) => {
+      console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Processing ${colors.white(url)}...`));
+      const response = await page.goto(url);
+
+      if (response.status() !== 200) {
+        console.log(`[${colors.magenta(source.name)}]`, colors.yellow(`Not available (${response.status()}) ${colors.white(url)}`));
+        return;
+      }
+
+      const contentType = response.headers()['content-type'];
+
+      let dataToWrite = '';
+      await page.waitForSelector('body');
+
+      // only download body content for html pages
+      if (contentType.includes('text/html')) {
+        dataToWrite = await page.evaluate(() => document.body.innerHTML);
+      } else {
+        // else, process the whole file
+        dataToWrite = await response.text();
+      }
+
+      const filePath = generateFilePathFromUrl(url, source, contentType);
+
+      if (await pathExists(filePath)) {
+        console.log(`[${colors.magenta(source.name)}]`, colors.yellow(`File already exists: ${colors.white(filePath)}`));
+        return;
+      }
+
+      // ensure the folder hierarchy
+      await ensureFile(filePath);
+
+      // write the body content in a file
+      await writeFile(filePath, dataToWrite);
+      await page.close();
+      availablePages.push(filePath);
+      return;
+    });
+
+    urlsList.forEach(async (url) => {
+      cluster.queue(url);
+    });
+
+    await cluster.idle();
+    await cluster.close();
+
+    console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Browsing complete for ${source.name} - generating manifest file...`));
+
+    const manifestFile = `temp/${source.folderName}/manifest.txt`;
+    await ensureFile(manifestFile);
+    //sort the result array for consistency
+    availablePages.sort();
+
+    // log the results into a file
+    availablePages.forEach(async (page) => {
+      // only add the page to the manifest if it was available
+      await appendFile(manifestFile, `${page}\n`);
+    });
+    await prettyCode(source);
+    await cleanupFiles(source);
+    await commitFiles(source);
+    return resolve();
+  });
+}
 
 /**
  * Try to detect rng and duplicated values and clean them
  */
 async function cleanupFiles(source: ISource) {
-  console.log(colors.cyan(`Cleaning up files...`));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Cleaning up files...`));
   const dir = `temp/${source.folderName}`;
   const files = await recursive(dir, config.protectedFiles);
 
@@ -80,7 +165,7 @@ async function cleanupFiles(source: ISource) {
 }
 
 async function prettyCode(source: ISource): Promise<void> {
-  console.log(colors.cyan(`Prettifying code using ${colors.white('Prettier')}...`));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Prettifying code using ${colors.white('Prettier')}...`));
 
   return new Promise((resolve, reject) => {
     const cp = exec(`prettier --write ${'temp/' + source.folderName}/**/*`);
@@ -102,8 +187,9 @@ async function prettyCode(source: ISource): Promise<void> {
  * except thoses who are in the exclude list (config.protectedFiles)
  * @param folderPath
  */
-async function cleanupTrackingFolder(folderPath: string) {
-  console.log(colors.cyan(`Cleaning up repo before scraping ...`));
+async function cleanupTrackingFolder(source: ISource, folderPath: string) {
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Cleaning up repo before scraping ${colors.white(folderPath)} ...`));
+  await ensureDir(folderPath);
   const files = await readdir(folderPath);
   files.forEach(async (file) => {
     // ignore if the file is protected
@@ -116,32 +202,36 @@ async function cleanupTrackingFolder(folderPath: string) {
 }
 
 async function cloneAndPrepareRepo(source: ISource) {
+  await git.cwd(__dirname);
   const repoUrl = `https://${process.env.GH_TOKEN}@${source.repoUrl}`;
   // remove the folder if it already exists
   if (await pathExists('temp/' + source.folderName)) {
-    console.log(colors.cyan(`Cleaning up existing folder:  ${colors.white(String('temp/' + source.folderName))}...`));
+    console.log(
+      `[${colors.magenta(source.name)}]`,
+      colors.cyan(`Cleaning up existing folder:  ${colors.white(String('temp/' + source.folderName))}...`)
+    );
     await rm('temp/' + source.folderName, { recursive: true, force: true });
   }
 
-  console.log(colors.cyan(`Cloning remote repository from : ${colors.white(String(source.repoUrl))}...`));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Cloning remote repository from : ${colors.white(String(source.repoUrl))}...`));
   await git.clone(repoUrl, 'temp/' + source.folderName);
-  await cleanupTrackingFolder('temp/' + source.folderName);
+  await cleanupTrackingFolder(source, 'temp/' + source.folderName);
 }
 
 async function commitFiles(source: ISource) {
-  console.log(colors.cyan(`Preparing to commit files to ${colors.white(String(source.repoUrl))}...`));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Preparing to commit files to ${colors.white(String(source.repoUrl))}...`));
   await git.cwd('temp/' + source.folderName);
   await git.add('./*');
 
   const commitMessage = await generateCommitMessage();
 
-  console.log(colors.cyan(`Commit: ${colors.white(commitMessage)}`));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Commit: ${colors.white(commitMessage)}`));
   await git.commit(commitMessage);
   if (isDev) {
     console.log(colors.cyan(`${colors.white('Dev-mode')} ignoring push`));
     return;
   }
-  console.log(colors.cyan(`Pushing...`));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Pushing...`));
   await git.push('origin', 'master', ['--force']);
 }
 
