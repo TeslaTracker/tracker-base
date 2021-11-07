@@ -46,7 +46,7 @@ const config: IConfig = {
     },
     {
       name: 'Tesla Website (China)',
-      folderName: 'tesla-website-cn',
+      folderName: 'tesla-website-china',
       repoUrl: 'github.com/TeslaTracker/tesla-website-china.git',
       baseUrl: 'https://www.tesla.cn',
       urls: [

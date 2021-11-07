@@ -28,3 +28,18 @@ jobs:
           # setup the username and email
           git config --global user.name "Tesla Tracker"
           git config --global user.email "<>"
+      - name: track-tesla-website
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          yarn start --source tesla-website
+      - name: track-tesla-website-china
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          yarn start --source tesla-website-china
+      - name: track-tesla-website-fr
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          yarn start --source tesla-website-fr
