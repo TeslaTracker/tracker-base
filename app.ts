@@ -13,7 +13,7 @@ import { Command } from 'commander';
 import { findIndex } from 'lodash';
 const program = new Command();
 
-program.option('-s, --source <source>', 'Specify the source to process', '');
+program.option('-s, --source <source>', 'Specify the source to process', '').option('-np, --noPretty', 'Skip prettier');
 
 program.parse(process.argv);
 
@@ -31,6 +31,10 @@ if (!process.env.GH_TOKEN) {
 if (isDev) {
   console.log(colors.yellow(`-- Dev mode enabled --`));
   console.log(`${colors.cyan(`🛈 Changes won't be pushed`)}`);
+}
+
+if (options.noPretty) {
+  console.log(colors.yellow(`-- Prettier will be skipped --`));
 }
 
 // set the selected sourc if provided in CLI
@@ -130,7 +134,10 @@ function processSource(source: ISource): Promise<void> {
       // only add the page to the manifest if it was available
       await appendFile(manifestFile, `${page}\n`);
     });
-    await prettyCode(source);
+    if (!options.noPretty) {
+      await prettyCode(source);
+    }
+
     await cleanupFiles(source);
     await commitFiles(source);
     return resolve();

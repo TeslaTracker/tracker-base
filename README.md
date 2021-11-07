@@ -27,3 +27,6 @@ Adding a `DEV` environment variable will prevent any real push and use a dummy d
 ## CLI Options
 
 `-s` `--source` A specific source to process , must match the source's **folderName** property
+
+`-np` `--noPretty` Skip the Prettier process -
+**SHOULD NOT** be used without dev mode
