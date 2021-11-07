@@ -61,3 +61,19 @@ export function cleanupFile(content: string): string {
 
   return content;
 }
+
+/**
+ * Generate a full file path from a given url
+ * @param url
+ * @param source
+ */
+export function generateFilePathFromUrl(url: string, source: ISource): string {
+  const parsedUrl = new URL(url);
+  let fileName = parsedUrl.pathname;
+  // handle "index" files
+  if (!fileName || fileName === '/') {
+    fileName = '/index';
+  }
+  const filePath = `temp/${source.folderName}${fileName}.html`;
+  return filePath;
+}

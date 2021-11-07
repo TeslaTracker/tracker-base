@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 import moment from 'moment';
-import { cleanupFile, generateUrlsList } from './utils';
+import { cleanupFile, generateFilePathFromUrl, generateUrlsList } from './utils';
 import recursive from 'recursive-readdir';
 import path from 'path';
 import { Cluster } from 'puppeteer-cluster';
@@ -51,9 +51,12 @@ config.sources.forEach(async (source) => {
     await page.waitForSelector('body');
     let bodyHTML = await page.evaluate(() => document.body.innerHTML);
     // temp/name/fr_FR/about.html
-    const parsedUrl = new URL(url);
-    const fileName = parsedUrl.pathname;
-    const filePath = `temp/${config.sources[0].folderName}${fileName}.html`;
+    const filePath = generateFilePathFromUrl(url, source);
+
+    if (await pathExists(filePath)) {
+      console.log(colors.yellow(`File already exists: ${colors.white(filePath)}`));
+      return;
+    }
 
     // ensure the folder hierarchy
     await ensureFile(filePath);
