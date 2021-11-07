@@ -1,15 +1,15 @@
 import { findIndex } from 'lodash';
-import { ISource } from './interfaces/config.interface';
+import IConfig, { ISource } from './interfaces/config.interface';
 
-export function generateUrlsList(source: ISource): string[] {
+export function generateUrlsList(source: ISource, config: IConfig): string[] {
   let urls: string[] = [];
   source.urls.forEach((url) => {
-    urls = urls.concat(hydrateUrl(url, source));
+    urls = urls.concat(hydrateUrl(url, source, config));
   });
   return urls;
 }
 
-function hydrateUrl(url: string, source: ISource): string[] {
+function hydrateUrl(url: string, source: ISource, config: IConfig): string[] {
   const variableRegex = new RegExp('%(.*?)%', 'g');
   let urls: string[] = [];
   // list all parameters in the url
@@ -21,12 +21,12 @@ function hydrateUrl(url: string, source: ISource): string[] {
   }
 
   // loop through all parameters
-  if (source.variables && urlVariables) {
+  if (config.variables && urlVariables) {
     urlVariables.forEach((variableMatch) => {
       // %toto% => toto
       const match = variableMatch.replace('%', '').replace('%', '');
 
-      const variableIndex = findIndex(source.variables, { name: match });
+      const variableIndex = findIndex(config.variables, { name: match });
 
       // skip if the variable don't exist in the source
       if (!~variableIndex) {
@@ -34,12 +34,12 @@ function hydrateUrl(url: string, source: ISource): string[] {
         return urls;
       }
 
-      const variableValues = source.variables[variableIndex].values;
+      const variableValues = config.variables[variableIndex].values;
 
       // ex: en_EN - fr_FR
       for (const value of variableValues) {
         const baseUrl = url.replace(variableMatch, value);
-        urls = urls.concat(hydrateUrl(baseUrl, source));
+        urls = urls.concat(hydrateUrl(baseUrl, source, config));
       }
     });
   }

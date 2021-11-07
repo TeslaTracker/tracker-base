@@ -11,10 +11,7 @@ export interface ISource {
    * Github repo where the results will be pushed
    */
   repoUrl: string;
-  /**
-   * A collection of variables that can be used withing the urls
-   */
-  variables: IVariable[];
+
   /**
    * A list of urls that will be used
    *
@@ -26,6 +23,10 @@ export interface ISource {
 export default interface IConfig {
   protectedFiles: string[];
   sources: ISource[];
+  /**
+   * A collection of variables that can be used withing the urls
+   */
+  variables: IVariable[];
 }
 
 export interface IVariable {

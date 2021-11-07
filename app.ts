@@ -1,5 +1,5 @@
 import config from './config';
-import { rm, readdir, pathExists, readFile, writeFile, ensureFile, appendFile } from 'fs-extra';
+import { rm, readdir, pathExists, readFile, writeFile, ensureFile, appendFile, ensureDir } from 'fs-extra';
 import colors from 'colors';
 import { exec } from 'child_process';
 import simpleGit from 'simple-git';
@@ -8,8 +8,6 @@ import moment from 'moment';
 import { cleanupFile, generateUrlsList } from './utils';
 import recursive from 'recursive-readdir';
 import path from 'path';
-import Puppeteer from 'puppeteer';
-import IPageProcessResponse from './interfaces/pageProcessResponse.interface';
 import { Cluster } from 'puppeteer-cluster';
 
 const isDev = process.env.DEV;
@@ -29,7 +27,7 @@ if (isDev) {
 config.sources.forEach(async (source) => {
   await cleanupTrackingFolder('temp/' + source.folderName);
 
-  const urlsList = generateUrlsList(source);
+  const urlsList = generateUrlsList(source, config);
 
   const availablePages: string[] = [];
 
@@ -53,10 +51,9 @@ config.sources.forEach(async (source) => {
     await page.waitForSelector('body');
     let bodyHTML = await page.evaluate(() => document.body.innerHTML);
     // temp/name/fr_FR/about.html
-    const { protocol, hostname } = new URL(url);
-    const fileName = url.replace(`${protocol}//${hostname}`, '');
-
-    const filePath = `temp/${config.sources[0].folderName}/${fileName}.html`;
+    const parsedUrl = new URL(url);
+    const fileName = parsedUrl.pathname;
+    const filePath = `temp/${config.sources[0].folderName}${fileName}.html`;
 
     // ensure the folder hierarchy
     await ensureFile(filePath);
@@ -87,9 +84,8 @@ config.sources.forEach(async (source) => {
     // only add the page to the manifest if it was available
     await appendFile(manifestFile, `${page}\n`);
   });
-
-  await cleanupFiles(source);
   await prettyCode(source);
+  await cleanupFiles(source);
 });
 
 /**
@@ -144,6 +140,7 @@ async function prettyCode(source: ISource): Promise<void> {
  */
 async function cleanupTrackingFolder(folderPath: string) {
   console.log(colors.cyan(`Cleaning up repo before scraping ...`));
+  await ensureDir(folderPath);
   const files = await readdir(folderPath);
   files.forEach(async (file) => {
     // ignore if the file is protected
