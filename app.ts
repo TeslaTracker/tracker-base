@@ -236,13 +236,12 @@ async function commitFiles(source: ISource) {
     await rm('.git/index.lock', { force: true });
   }
 
-  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add .'));
-
   if (!(await gitHasChanges(git))) {
     console.log(`[${colors.magenta(source.name)}]`, colors.cyan('No changes to commit'));
     return;
   }
 
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add .'));
   // add all changes
   await git.add('-A');
 

@@ -1,0 +1,35 @@
+name: Tracker - tesla-website-china
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    # https://crontab.guru/#0_*/6_*_*_*
+    - cron:  '0 */6 * * *'
+jobs:
+  run-tracker:
+    runs-on: ubuntu-latest
+  
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v1
+
+      - name: Install Node.js, NPM and Yarn
+        uses: actions/setup-node@v1
+        with:
+          node-version: 15
+
+      - name: Yarn install
+        run: |
+          yarn
+      - name: setup git config
+        run: |
+          # setup the username and email
+          git config --global user.name "Tesla Tracker"
+          git config --global user.email "<>"
+      - name: yarn start
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          yarn start --source tesla-website-china

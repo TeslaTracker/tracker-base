@@ -1,4 +1,4 @@
-name: Run Tracker
+name: Tracker - tesla-website-fr
 on:
   push:
     branches:
@@ -32,4 +32,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          yarn start
+          yarn start --source tesla-website-fr
