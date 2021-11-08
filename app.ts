@@ -231,11 +231,6 @@ async function commitFiles(source: ISource) {
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git cwd temp/' + source.folderName));
   await git.cwd('temp/' + source.folderName);
 
-  // delete lock file if it exists
-  if (await pathExists('.git/index.lock')) {
-    await rm('.git/index.lock', { force: true });
-  }
-
   if (await gitHasChanges(git)) {
     console.log(`[${colors.magenta(source.name)}]`, colors.cyan('Changes detected'));
   } else {
@@ -246,6 +241,11 @@ async function commitFiles(source: ISource) {
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add -A'));
   // add all changes
   await git.add('-A');
+
+  // delete lock file if it exists
+  if (await pathExists('.git/index.lock')) {
+    await rm('.git/index.lock', { force: true });
+  }
 
   // create the commit message
   const commitMessage = await generateCommitMessage();
