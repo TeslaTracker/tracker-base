@@ -8,12 +8,19 @@ export function generateUrlsList(source: ISource, config: IConfig): string[] {
   source.urls.forEach((url) => {
     urls = urls.concat(hydrateUrl(url, source, config));
   });
+
+  // add the domain base to all parsed urls
+  urls.forEach((url, urlIndex) => {
+    urls[urlIndex] = `${source.baseUrl}${url}`;
+  });
+
   return urls;
 }
 
 function hydrateUrl(url: string, source: ISource, config: IConfig): string[] {
   const variableRegex = new RegExp('%(.*?)%', 'g');
   let urls: string[] = [];
+
   // list all parameters in the url
   const urlVariables = url.match(variableRegex);
 
