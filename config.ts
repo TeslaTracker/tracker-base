@@ -57,8 +57,18 @@ const config: IConfig = {
       name: 'Tesla Web API',
       folderName: 'tesla-web-api',
       repoUrl: 'github.com/TeslaTracker/tracking-tesla-web-api.git',
-      baseUrl: 'https://www.tesla.com/api',
-      urls: ['/tesla/header/v1', '/tesla/header/v2', '/tesla/footer/html/v1', '/tesla/footer/html/v2'],
+      baseUrl: 'https://www.tesla.com',
+      urls: [
+        '/api/tesla/header/v1',
+        '/api/tesla/header/v2',
+        '/api/tesla/footer/html/v1',
+        '/api/tesla/footer/html/v2',
+        /* other langs */
+        '/%lang%/api/tesla/header/v1',
+        '/%lang%/api/tesla/header/v2',
+        '/%lang%/api/tesla/footer/html/v1',
+        '/%lang%/api/tesla/footer/html/v2',
+      ],
     },
   ],
 };
