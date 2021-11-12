@@ -13,6 +13,8 @@ import { Command } from 'commander';
 import { findIndex } from 'lodash';
 const program = new Command();
 
+const dummyDomain = 'https://lucid-kalam-fbe611.netlify.app';
+
 program.option('-s, --source <source>', 'Specify the source to process', '').option('-np, --noPretty', 'Skip prettier');
 
 program.parse(process.argv);
@@ -20,7 +22,7 @@ program.parse(process.argv);
 const options = program.opts();
 
 const isDev = process.env.DEV;
-const dummyDomain = 'https://cyriaque.net';
+
 console.log('Starting scrap process...');
 const git = simpleGit();
 
@@ -31,6 +33,7 @@ if (!process.env.GH_TOKEN) {
 if (isDev) {
   console.log(colors.yellow(`-- Dev mode enabled --`));
   console.log(`${colors.cyan(`🛈 Changes won't be pushed`)}`);
+  console.log(`${colors.cyan(`🛈 Dummy domain will be used : ${colors.white(dummyDomain)}`)}`);
 }
 
 if (options.noPretty) {
@@ -64,6 +67,11 @@ function processSource(source: ISource): Promise<void> {
   return new Promise(async (resolve) => {
     await cloneAndPrepareRepo(source);
 
+    // replace the base url if dev mode
+    if (isDev) {
+      source.baseUrl = dummyDomain;
+    }
+
     const urlsList = generateUrlsList(source, config);
 
     const availablePages: string[] = [];
@@ -71,7 +79,7 @@ function processSource(source: ISource): Promise<void> {
     // Create a cluster with 2 workers
     const cluster = await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_CONTEXT,
-      maxConcurrency: 5,
+      maxConcurrency: 2,
       puppeteerOptions: {},
     });
 
@@ -90,9 +98,16 @@ function processSource(source: ISource): Promise<void> {
       let dataToWrite = '';
       await page.waitForSelector('body');
 
-      // only download body content for html pages
+      // download the tesla store object if it exists
       if (contentType.includes('text/html')) {
-        dataToWrite = await page.evaluate(() => document.body.innerHTML);
+        // force json
+        contentType === 'json';
+
+        var functionToInject = function () {
+          return (window as any).tesla.App;
+        };
+
+        dataToWrite = JSON.parse(await page.evaluate(functionToInject));
       } else {
         // else, process the whole file
         dataToWrite = await response.text();
@@ -253,7 +268,7 @@ async function commitFiles(source: ISource) {
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Commit: ${colors.white(commitMessage)}`));
   await git.commit(commitMessage);
   if (isDev) {
-    console.log(colors.cyan(`${colors.white('Dev-mode')} ignoring push`));
+    console.log(colors.yellow(`${colors.white('Dev-mode')} ignoring push`));
     return;
   }
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Pushing...`));
