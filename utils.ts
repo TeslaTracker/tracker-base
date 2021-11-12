@@ -2,17 +2,25 @@ import { findIndex } from 'lodash';
 import IConfig, { ISource } from './interfaces/config.interface';
 import mime from 'mime-types';
 import path from 'path';
+import { SimpleGit } from 'simple-git';
 export function generateUrlsList(source: ISource, config: IConfig): string[] {
   let urls: string[] = [];
   source.urls.forEach((url) => {
     urls = urls.concat(hydrateUrl(url, source, config));
   });
+
+  // add the domain base to all parsed urls
+  urls.forEach((url, urlIndex) => {
+    urls[urlIndex] = `${source.baseUrl}${url}`;
+  });
+
   return urls;
 }
 
 function hydrateUrl(url: string, source: ISource, config: IConfig): string[] {
   const variableRegex = new RegExp('%(.*?)%', 'g');
   let urls: string[] = [];
+
   // list all parameters in the url
   const urlVariables = url.match(variableRegex);
 
@@ -92,4 +100,18 @@ export function generateFilePathFromUrl(url: string, source: ISource, contentTyp
     fileName = '/index';
   }
   return `temp/${source.folderName}${fileName}.${ext}`;
+}
+
+/**
+ * Tell wether of not the git instance has changed files
+ * @param git
+ * @returns
+ */
+export async function gitHasChanges(git: SimpleGit): Promise<boolean> {
+  const diff = await git.raw(['ls-files', '--deleted', '--modified', '--others', '--exclude-standard']);
+
+  if (diff) {
+    return true;
+  }
+  return false;
 }

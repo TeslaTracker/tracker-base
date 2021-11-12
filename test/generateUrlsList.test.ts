@@ -10,7 +10,7 @@ const config: IConfig = {
       name: 'test Source',
       repoUrl: '',
       baseUrl: 'https://test-url.com',
-      urls: ['https://test-url.com/%lang%/about', 'https://test-url.com/%lang%/user/%username%?debug=%debug%'],
+      urls: ['/%lang%/about', '/%lang%/user/%username%?debug=%debug%'],
     },
   ],
   variables: [
@@ -45,11 +45,11 @@ describe('Testing URLs generation with variables parameters', () => {
   });
 
   it('should not replace url param if there is no corresponding variable', () => {
-    let source1 = { ...config.sources[0] };
-    source1.urls = ['https://test-no-var/%20%', 'https://image%error%.png'];
+    let source1 = { ...config.sources[0], baseUrl: 'https://test-url.com' };
+    source1.urls = ['/%20%', '/image%error%.png'];
     const res = generateUrlsList(source1, config);
     expect(res).lengthOf(2);
-    expect(res).to.contain('https://test-no-var/%20%');
-    expect(res).to.contain('https://image%error%.png');
+    expect(res).to.contain('https://test-url.com/%20%');
+    expect(res).to.contain('https://test-url.com/image%error%.png');
   });
 });

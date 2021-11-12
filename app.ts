@@ -5,7 +5,7 @@ import { exec } from 'child_process';
 import simpleGit from 'simple-git';
 import { ISource } from './interfaces/config.interface';
 import moment from 'moment';
-import { cleanupFile, generateFilePathFromUrl, generateUrlsList } from './utils';
+import { cleanupFile, generateFilePathFromUrl, generateUrlsList, gitHasChanges } from './utils';
 import recursive from 'recursive-readdir';
 import path from 'path';
 import { Cluster } from 'puppeteer-cluster';
@@ -13,7 +13,7 @@ import { Command } from 'commander';
 import { findIndex } from 'lodash';
 const program = new Command();
 
-program.option('-s, --source <source>', 'Specify the source to process', '');
+program.option('-s, --source <source>', 'Specify the source to process', '').option('-np, --noPretty', 'Skip prettier');
 
 program.parse(process.argv);
 
@@ -31,6 +31,10 @@ if (!process.env.GH_TOKEN) {
 if (isDev) {
   console.log(colors.yellow(`-- Dev mode enabled --`));
   console.log(`${colors.cyan(`🛈 Changes won't be pushed`)}`);
+}
+
+if (options.noPretty) {
+  console.log(colors.yellow(`-- Prettier will be skipped --`));
 }
 
 // set the selected sourc if provided in CLI
@@ -130,7 +134,10 @@ function processSource(source: ISource): Promise<void> {
       // only add the page to the manifest if it was available
       await appendFile(manifestFile, `${page}\n`);
     });
-    await prettyCode(source);
+    if (!options.noPretty) {
+      await prettyCode(source);
+    }
+
     await cleanupFiles(source);
     await commitFiles(source);
     return resolve();
@@ -203,6 +210,7 @@ async function cleanupTrackingFolder(source: ISource, folderPath: string) {
 
 async function cloneAndPrepareRepo(source: ISource) {
   await git.cwd(__dirname);
+
   const repoUrl = `https://${process.env.GH_TOKEN}@${source.repoUrl}`;
   // remove the folder if it already exists
   if (await pathExists('temp/' + source.folderName)) {
@@ -220,9 +228,26 @@ async function cloneAndPrepareRepo(source: ISource) {
 
 async function commitFiles(source: ISource) {
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Preparing to commit files to ${colors.white(String(source.repoUrl))}...`));
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git cwd temp/' + source.folderName));
   await git.cwd('temp/' + source.folderName);
-  await git.add('./*');
 
+  if (await gitHasChanges(git)) {
+    console.log(`[${colors.magenta(source.name)}]`, colors.cyan('Changes detected'));
+  } else {
+    console.log(`[${colors.magenta(source.name)}]`, colors.cyan('No changes to commit'));
+    return;
+  }
+
+  console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add -A'));
+  // add all changes
+  await git.add('-A');
+
+  // delete lock file if it exists
+  if (await pathExists('.git/index.lock')) {
+    await rm('.git/index.lock', { force: true });
+  }
+
+  // create the commit message
   const commitMessage = await generateCommitMessage();
 
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Commit: ${colors.white(commitMessage)}`));
@@ -236,8 +261,14 @@ async function commitFiles(source: ISource) {
 }
 
 async function generateCommitMessage() {
-  const diffMessage = await git.diff(['--cached', '--shortstat']);
+  let diffMessage = await git.diff(['--cached', '--shortstat']);
+
+  if (!diffMessage) {
+    diffMessage = 'No changes detected';
+  }
+
   let commitMessage = `${diffMessage} - ${moment().format('MMM Do YYYY, h:mm:ss a')} `;
   commitMessage = commitMessage.split('\n').join('');
+
   return commitMessage;
 }
