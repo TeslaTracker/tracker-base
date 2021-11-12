@@ -100,14 +100,13 @@ function processSource(source: ISource): Promise<void> {
 
       // download the tesla store object if it exists
       if (contentType.includes('text/html')) {
-        // force json
-        contentType === 'json';
-
-        var functionToInject = function () {
+        const injectFunc = function () {
           return (window as any).tesla.App;
         };
 
-        dataToWrite = JSON.parse(await page.evaluate(functionToInject));
+        const teslaDb = await page.evaluate(injectFunc);
+
+        dataToWrite = JSON.stringify(teslaDb);
       } else {
         // else, process the whole file
         dataToWrite = await response.text();

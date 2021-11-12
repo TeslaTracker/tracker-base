@@ -94,6 +94,11 @@ export function generateFilePathFromUrl(url: string, source: ISource, contentTyp
     ext = 'txt';
   }
 
+  // replace html by json
+  if (ext === 'html') {
+    ext = 'json';
+  }
+
   let fileName = url.replace(base, '');
   // handle "index" files
   if (!fileName || fileName === '/') {

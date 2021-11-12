@@ -10,7 +10,9 @@
             "name": "Yarn start",
             "runtimeExecutable": "yarn",
             "runtimeArgs": [
-                "start-env"
+                "start-env",
+                "--source",
+                "tesla-website"
             ],
             "port": 5858,
             "cwd": "${workspaceRoot}",

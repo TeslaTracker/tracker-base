@@ -23,7 +23,19 @@ export interface ISource {
    * Using a %varName% variable will loop through the list of the corresponsing var
    *
    */
-  urls: string[];
+  urls: IUrlConfig[];
+}
+
+export interface IUrlConfig {
+  address: string;
+  /**
+   * If provided try to retrieve an object from the window variable
+   *
+   * Use object-path
+   *
+   * https://www.npmjs.com/package/object-path
+   */
+  objectPath: string;
 }
 export default interface IConfig {
   protectedFiles: string[];
