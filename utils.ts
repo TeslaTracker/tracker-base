@@ -1,32 +1,31 @@
 import { findIndex } from 'lodash';
-import IConfig, { ISource } from './interfaces/config.interface';
+import IConfig, { ISource, IUrlConfig } from './interfaces/config.interface';
 import mime from 'mime-types';
-import path from 'path';
 import { SimpleGit } from 'simple-git';
-export function generateUrlsList(source: ISource, config: IConfig): string[] {
-  let urls: string[] = [];
-  source.urls.forEach((url) => {
-    urls = urls.concat(hydrateUrl(url, source, config));
+export function generateUrlsList(source: ISource, config: IConfig): IUrlConfig[] {
+  let urls: IUrlConfig[] = [];
+  source.urls.forEach((urlConfig) => {
+    urls = urls.concat(hydrateUrl(urlConfig, source, config));
   });
 
   // add the domain base to all parsed urls
-  urls.forEach((url, urlIndex) => {
-    urls[urlIndex] = `${source.baseUrl}${url}`;
+  urls.forEach((urlConfig, configIndex) => {
+    urls[configIndex].address = `${source.baseUrl}${urlConfig.address}`;
   });
 
   return urls;
 }
 
-function hydrateUrl(url: string, source: ISource, config: IConfig): string[] {
+function hydrateUrl(urlConfig: IUrlConfig, source: ISource, config: IConfig): IUrlConfig[] {
   const variableRegex = new RegExp('%(.*?)%', 'g');
-  let urls: string[] = [];
+  let urlConfigs: IUrlConfig[] = [];
 
   // list all parameters in the url
-  const urlVariables = url.match(variableRegex);
+  const urlVariables = urlConfig.address.match(variableRegex);
 
   // if there is not match, the url is complete => return it
   if (!urlVariables) {
-    return [url];
+    return [urlConfig];
   }
 
   // loop through all parameters
@@ -39,20 +38,20 @@ function hydrateUrl(url: string, source: ISource, config: IConfig): string[] {
 
       // skip if the variable don't exist in the source
       if (!~variableIndex) {
-        urls.push(url);
-        return urls;
+        urlConfigs.push(urlConfig);
+        return urlConfigs;
       }
 
       const variableValues = config.variables[variableIndex].values;
 
       // ex: en_EN - fr_FR
       for (const value of variableValues) {
-        const baseUrl = url.replace(variableMatch, value);
-        urls = urls.concat(hydrateUrl(baseUrl, source, config));
+        const baseConfig = { ...urlConfig, address: urlConfig.address.replace(variableMatch, value) };
+        urlConfigs = urlConfigs.concat(hydrateUrl(baseConfig, source, config));
       }
     });
   }
-  return urls;
+  return urlConfigs;
 }
 
 export function cleanupFile(content: string): string {
@@ -76,7 +75,7 @@ export function cleanupFile(content: string): string {
  * @param url
  * @param source
  */
-export function generateFilePathFromUrl(url: string, source: ISource, contentType: string): string {
+export function generateFilePathFromUrl(urlConfig: IUrlConfig, source: ISource, contentType: string): string {
   // Note
 
   // Tesla does not use file extension withing their website but it can be problematic in the futur...
@@ -94,12 +93,12 @@ export function generateFilePathFromUrl(url: string, source: ISource, contentTyp
     ext = 'txt';
   }
 
-  // replace html by json
-  if (ext === 'html') {
+  // force json if object evaluation
+  if (urlConfig.shouldGetTeslaStore) {
     ext = 'json';
   }
 
-  let fileName = url.replace(base, '');
+  let fileName = urlConfig.address.replace(base, '');
   // handle "index" files
   if (!fileName || fileName === '/') {
     fileName = '/index';

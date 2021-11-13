@@ -1,8 +1,18 @@
 import { expect } from 'chai';
-import { ISource } from '../interfaces/config.interface';
+import { ISource, IUrlConfig } from '../interfaces/config.interface';
 import { generateFilePathFromUrl } from '../utils';
 
-const urls = ['https://tesla.com/fr/test', 'https://tesla.com', 'https://tesla.com/api/test'];
+const urls: IUrlConfig[] = [
+  {
+    address: 'https://tesla.com/fr/test',
+  },
+  {
+    address: 'https://tesla.com',
+  },
+  {
+    address: 'https://tesla.com/api/test',
+  },
+];
 
 const source: ISource = {
   folderName: 'testSource',

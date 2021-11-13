@@ -29,13 +29,14 @@ export interface ISource {
 export interface IUrlConfig {
   address: string;
   /**
-   * If provided try to retrieve an object from the window variable
+   * If provided try to retrieve the window.tesla object
    *
-   * Use object-path
+   * The outFile will also be a json file
    *
-   * https://www.npmjs.com/package/object-path
    */
-  objectPath: string;
+  shouldGetTeslaStore?: boolean;
+  // override the out file name
+  outFile?: string;
 }
 export default interface IConfig {
   protectedFiles: string[];

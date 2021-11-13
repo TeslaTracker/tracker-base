@@ -37,37 +37,51 @@ const config: IConfig = {
       folderName: 'tesla-website',
       repoUrl: 'github.com/TeslaTracker/tracking-tesla-website.git',
       baseUrl: 'https://www.tesla.com',
-      urls: ['/', '/findus/list/%services%', '/%products%'],
+      urls: [
+        {
+          address: '/',
+        },
+        {
+          address: '/findus/list/%services%',
+        },
+        {
+          address: '/%products%',
+        },
+        { address: '/%products%/design', shouldGetTeslaStore: true },
+      ],
     },
-    {
-      name: 'Tesla Website (China)',
-      folderName: 'tesla-website-china',
-      repoUrl: 'github.com/TeslaTracker/tracking-tesla-website-china.git',
-      baseUrl: 'https://www.tesla.cn',
-      urls: ['/', '/%products%', '/findus/list/%services%'],
-    },
-    {
-      name: 'Tesla Website (France)',
-      folderName: 'tesla-website-fr',
-      repoUrl: 'github.com/TeslaTracker/tracking-tesla-website-fr.git',
-      baseUrl: 'https://www.tesla.com/fr_fr',
-      urls: ['/', '/%products%', '/findus/list/%services%'],
-    },
+
     {
       name: 'Tesla Web API',
       folderName: 'tesla-web-api',
       repoUrl: 'github.com/TeslaTracker/tracking-tesla-web-api.git',
       baseUrl: 'https://www.tesla.com',
       urls: [
-        '/api/tesla/header/v1',
-        '/api/tesla/header/v2',
-        '/api/tesla/footer/html/v1',
-        '/api/tesla/footer/html/v2',
+        {
+          address: '/api/tesla/header/v1',
+        },
+        {
+          address: '/api/tesla/header/v2',
+        },
+        {
+          address: '/api/tesla/footer/html/v1',
+        },
+        {
+          address: '/api/tesla/footer/html/v2',
+        },
         /* other langs */
-        '/%lang%/api/tesla/header/v1',
-        '/%lang%/api/tesla/header/v2',
-        '/%lang%/api/tesla/footer/html/v1',
-        '/%lang%/api/tesla/footer/html/v2',
+        {
+          address: '/%lang%/api/tesla/header/v1',
+        },
+        {
+          address: '/%lang%/api/tesla/header/v2',
+        },
+        {
+          address: '/%lang%/api/tesla/footer/html/v1',
+        },
+        {
+          address: '/%lang%/api/tesla/footer/html/v2',
+        },
       ],
     },
   ],

@@ -10,7 +10,14 @@ const config: IConfig = {
       name: 'test Source',
       repoUrl: '',
       baseUrl: 'https://test-url.com',
-      urls: ['/%lang%/about', '/%lang%/user/%username%?debug=%debug%'],
+      urls: [
+        {
+          address: '/%lang%/about',
+        },
+        {
+          address: '/%lang%/user/%username%?debug=%debug%',
+        },
+      ],
     },
   ],
   variables: [
@@ -40,16 +47,19 @@ describe('Testing URLs generation with variables parameters', () => {
   it('should generate a list of urls for multiple parameters', () => {
     const res = generateUrlsList(config.sources[0], config);
     expect(res).lengthOf(50);
-    expect(res).to.contain('https://test-url.com/fr_FR/user/ElonMusk?debug=false');
-    expect(res).to.contain('https://test-url.com/en_EN/user/JohnDoe?debug=true');
   });
 
   it('should not replace url param if there is no corresponding variable', () => {
     let source1 = { ...config.sources[0], baseUrl: 'https://test-url.com' };
-    source1.urls = ['/%20%', '/image%error%.png'];
+    source1.urls = [
+      {
+        address: '/%20%',
+      },
+      {
+        address: '/image%error%.png',
+      },
+    ];
     const res = generateUrlsList(source1, config);
     expect(res).lengthOf(2);
-    expect(res).to.contain('https://test-url.com/%20%');
-    expect(res).to.contain('https://test-url.com/image%error%.png');
   });
 });

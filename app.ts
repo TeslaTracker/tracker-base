@@ -3,7 +3,7 @@ import { rm, readdir, pathExists, readFile, writeFile, ensureFile, appendFile, e
 import colors from 'colors';
 import { exec } from 'child_process';
 import simpleGit from 'simple-git';
-import { ISource } from './interfaces/config.interface';
+import { ISource, IUrlConfig } from './interfaces/config.interface';
 import moment from 'moment';
 import { cleanupFile, generateFilePathFromUrl, generateUrlsList, gitHasChanges } from './utils';
 import recursive from 'recursive-readdir';
@@ -83,13 +83,12 @@ function processSource(source: ISource): Promise<void> {
       puppeteerOptions: {},
     });
 
-    // Define a task (in this case: screenshot of page)
-    await cluster.task(async ({ page, data: url }) => {
-      console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Processing ${colors.white(url)}...`));
-      const response = await page.goto(url);
+    await cluster.task(async ({ page, data: urlConfig }: { page: any; data: IUrlConfig }) => {
+      console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Processing ${colors.white(urlConfig.address)}...`));
+      const response = await page.goto(urlConfig.address);
 
       if (response.status() !== 200) {
-        console.log(`[${colors.magenta(source.name)}]`, colors.yellow(`Not available (${response.status()}) ${colors.white(url)}`));
+        console.log(`[${colors.magenta(source.name)}]`, colors.yellow(`Not available (${response.status()}) ${colors.white(urlConfig.address)}`));
         return;
       }
 
@@ -98,10 +97,11 @@ function processSource(source: ISource): Promise<void> {
       let dataToWrite = '';
       await page.waitForSelector('body');
 
-      // download the tesla store object if it exists
-      if (contentType.includes('text/html')) {
+      // Retrieve the object if specified
+      if (urlConfig.shouldGetTeslaStore) {
+        console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Evaluating Tesla store`));
         const injectFunc = function () {
-          return (window as any).tesla.App;
+          return (window as any).tesla.DSServices;
         };
 
         const teslaDb = await page.evaluate(injectFunc);
@@ -112,7 +112,7 @@ function processSource(source: ISource): Promise<void> {
         dataToWrite = await response.text();
       }
 
-      const filePath = generateFilePathFromUrl(url, source, contentType);
+      const filePath = generateFilePathFromUrl(urlConfig, source, contentType);
 
       if (await pathExists(filePath)) {
         console.log(`[${colors.magenta(source.name)}]`, colors.yellow(`File already exists: ${colors.white(filePath)}`));
