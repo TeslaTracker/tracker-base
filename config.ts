@@ -39,12 +39,6 @@ const config: IConfig = {
       baseUrl: 'https://www.tesla.com',
       urls: [
         {
-          address: '/',
-        },
-        {
-          address: '/findus/list/%services%',
-        },
-        {
           address: '/%products%',
         },
         { address: '/%products%/design', shouldGetTeslaStore: true },
@@ -60,12 +54,6 @@ const config: IConfig = {
         {
           address: '/',
         },
-        {
-          address: '/findus/list/%services%',
-        },
-        {
-          address: '/%products%',
-        },
         { address: '/%products%/design', shouldGetTeslaStore: true },
       ],
     },
@@ -77,12 +65,6 @@ const config: IConfig = {
       urls: [
         {
           address: '/',
-        },
-        {
-          address: '/findus/list/%services%',
-        },
-        {
-          address: '/%products%',
         },
         { address: '/%products%/design', shouldGetTeslaStore: true },
       ],
