@@ -23,7 +23,20 @@ export interface ISource {
    * Using a %varName% variable will loop through the list of the corresponsing var
    *
    */
-  urls: string[];
+  urls: IUrlConfig[];
+}
+
+export interface IUrlConfig {
+  address: string;
+  /**
+   * If provided try to retrieve the window.tesla object
+   *
+   * The outFile will also be a json file
+   *
+   */
+  shouldGetTeslaStore?: boolean;
+  // override the out file name
+  outFile?: string;
 }
 export default interface IConfig {
   protectedFiles: string[];

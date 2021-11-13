@@ -3,7 +3,7 @@ import { rm, readdir, pathExists, readFile, writeFile, ensureFile, appendFile, e
 import colors from 'colors';
 import { exec } from 'child_process';
 import simpleGit from 'simple-git';
-import { ISource } from './interfaces/config.interface';
+import { ISource, IUrlConfig } from './interfaces/config.interface';
 import moment from 'moment';
 import { cleanupFile, generateFilePathFromUrl, generateUrlsList, gitHasChanges } from './utils';
 import recursive from 'recursive-readdir';
@@ -13,6 +13,8 @@ import { Command } from 'commander';
 import { findIndex } from 'lodash';
 const program = new Command();
 
+const dummyDomain = 'https://lucid-kalam-fbe611.netlify.app';
+
 program.option('-s, --source <source>', 'Specify the source to process', '').option('-np, --noPretty', 'Skip prettier');
 
 program.parse(process.argv);
@@ -20,7 +22,7 @@ program.parse(process.argv);
 const options = program.opts();
 
 const isDev = process.env.DEV;
-const dummyDomain = 'https://cyriaque.net';
+
 console.log('Starting scrap process...');
 const git = simpleGit();
 
@@ -31,6 +33,7 @@ if (!process.env.GH_TOKEN) {
 if (isDev) {
   console.log(colors.yellow(`-- Dev mode enabled --`));
   console.log(`${colors.cyan(`🛈 Changes won't be pushed`)}`);
+  console.log(`${colors.cyan(`🛈 Dummy domain will be used : ${colors.white(dummyDomain)}`)}`);
 }
 
 if (options.noPretty) {
@@ -64,6 +67,11 @@ function processSource(source: ISource): Promise<void> {
   return new Promise(async (resolve) => {
     await cloneAndPrepareRepo(source);
 
+    // replace the base url if dev mode
+    if (isDev) {
+      source.baseUrl = dummyDomain;
+    }
+
     const urlsList = generateUrlsList(source, config);
 
     const availablePages: string[] = [];
@@ -71,17 +79,16 @@ function processSource(source: ISource): Promise<void> {
     // Create a cluster with 2 workers
     const cluster = await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_CONTEXT,
-      maxConcurrency: 5,
+      maxConcurrency: 2,
       puppeteerOptions: {},
     });
 
-    // Define a task (in this case: screenshot of page)
-    await cluster.task(async ({ page, data: url }) => {
-      console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Processing ${colors.white(url)}...`));
-      const response = await page.goto(url);
+    await cluster.task(async ({ page, data: urlConfig }: { page: any; data: IUrlConfig }) => {
+      console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Processing ${colors.white(urlConfig.address)}...`));
+      const response = await page.goto(urlConfig.address);
 
       if (response.status() !== 200) {
-        console.log(`[${colors.magenta(source.name)}]`, colors.yellow(`Not available (${response.status()}) ${colors.white(url)}`));
+        console.log(`[${colors.magenta(source.name)}]`, colors.yellow(`Not available (${response.status()}) ${colors.white(urlConfig.address)}`));
         return;
       }
 
@@ -90,15 +97,22 @@ function processSource(source: ISource): Promise<void> {
       let dataToWrite = '';
       await page.waitForSelector('body');
 
-      // only download body content for html pages
-      if (contentType.includes('text/html')) {
-        dataToWrite = await page.evaluate(() => document.body.innerHTML);
+      // Retrieve the object if specified
+      if (urlConfig.shouldGetTeslaStore) {
+        console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Evaluating Tesla store`));
+        const injectFunc = function () {
+          return (window as any).tesla.DSServices;
+        };
+
+        const teslaDb = await page.evaluate(injectFunc);
+
+        dataToWrite = JSON.stringify(teslaDb);
       } else {
         // else, process the whole file
         dataToWrite = await response.text();
       }
 
-      const filePath = generateFilePathFromUrl(url, source, contentType);
+      const filePath = generateFilePathFromUrl(urlConfig, source, contentType);
 
       if (await pathExists(filePath)) {
         console.log(`[${colors.magenta(source.name)}]`, colors.yellow(`File already exists: ${colors.white(filePath)}`));
@@ -253,7 +267,7 @@ async function commitFiles(source: ISource) {
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Commit: ${colors.white(commitMessage)}`));
   await git.commit(commitMessage);
   if (isDev) {
-    console.log(colors.cyan(`${colors.white('Dev-mode')} ignoring push`));
+    console.log(colors.yellow(`${colors.white('Dev-mode')} ignoring push`));
     return;
   }
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Pushing...`));
