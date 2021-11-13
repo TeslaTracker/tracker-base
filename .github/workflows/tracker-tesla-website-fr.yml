@@ -5,8 +5,8 @@ on:
       - master
   schedule:
     # * is a special character in YAML so you have to quote this string
-    # https://crontab.guru/#0_*/6_*_*_*
-    - cron:  '0 */6 * * *'
+    # https://crontab.guru/#0_*/3_*_*_*
+    - cron:  '0 */3 * * *'
 jobs:
   run-tracker:
     runs-on: ubuntu-latest
