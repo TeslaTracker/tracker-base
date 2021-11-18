@@ -254,7 +254,7 @@ async function commitFiles(source: ISource) {
 
   console.log(`[${colors.magenta(source.name)}]`, colors.cyan('git add -A'));
   // add all changes
-  await git.add('-A');
+  await git.add('.');
 
   // delete lock file if it exists
   if (await pathExists('.git/index.lock')) {
