@@ -99,7 +99,7 @@ function processSource(source: ISource): Promise<void> {
 
       // Retrieve the object if specified
       if (urlConfig.shouldGetTeslaStore) {
-        console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Evaluating Tesla store`));
+        console.log(`[${colors.magenta(source.name)}]`, colors.cyan(`Evaluating Tesla store in page: ${colors.white(urlConfig.address)}`));
         const injectFunc = function () {
           return (window as any).tesla.DSServices;
         };
