@@ -37,14 +37,8 @@ const config: IConfig = {
       folderName: 'tesla-website',
       repoUrl: 'github.com/TeslaTracker/tracking-tesla-website.git',
       baseUrl: 'https://www.tesla.com',
-      urls: [
-        {
-          address: '/%products%',
-        },
-        { address: '/%products%/design', shouldGetTeslaStore: true },
-      ],
+      urls: [{ address: '/%products%/design', shouldGetTeslaStore: true }],
     },
-
     {
       name: 'Tesla Website FR',
       folderName: 'tesla-website-fr',
