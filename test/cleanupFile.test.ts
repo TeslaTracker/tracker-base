@@ -65,6 +65,11 @@ describe('Testing files duplication cleanup', () => {
   it('should cleanup duplicated files name', () => {
     expect(cleanupFile(`<link ref="icon" href="favicon_5.png">`)).to.equal(`<link ref="icon" href="favicon.png">`);
   });
+
+  it('should NOT cleannup json prop value', () => {
+    expect(cleanupFile(`{id: 'STUD_3QTR'}`)).to.equal(`{id: 'STUD_3QTR'}`);
+  });
+
   it('should cleanup multiple duplicated files name', () => {
     expect(cleanupFile(`<link ref="icon" href="favicon_5.png"><link ref="icon" href="test_8.png">`)).to.equal(
       `<link ref="icon" href="favicon.png"><link ref="icon" href="test.png">`

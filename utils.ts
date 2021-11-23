@@ -61,7 +61,7 @@ function hydrateUrl(urlConfig: IUrlConfig, source: ISource, config: IConfig): IU
  */
 export function cleanupFile(content: string): string {
   // replace favicon_1.png with favicon.png
-  const duplicatedFileRegex = new RegExp(`_[0-9].`, 'gm');
+  const duplicatedFileRegex = new RegExp(`_[0-9]\\.`, 'gm');
   content = content.replace(duplicatedFileRegex, '.');
 
   // remove the nonce parameter from the script tags
