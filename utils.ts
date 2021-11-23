@@ -54,6 +54,11 @@ function hydrateUrl(urlConfig: IUrlConfig, source: ISource, config: IConfig): IU
   return urlConfigs;
 }
 
+/**
+ * Clean up file content by removing rng values and dates
+ * @param content
+ * @returns
+ */
 export function cleanupFile(content: string): string {
   // replace favicon_1.png with favicon.png
   const duplicatedFileRegex = new RegExp(`_[0-9].`, 'gm');
@@ -66,6 +71,10 @@ export function cleanupFile(content: string): string {
   // remove the permission hash from drupal
   const permissionHashRegex = new RegExp(`"permissionsHash": "(.)*?"`, 'gm');
   content = content.replace(permissionHashRegex, '"permissionsHash": ""');
+
+  // remove the "date" prop from json data and replace it with 0
+  const dateValRegex = new RegExp(`"date":(.*?),`, 'gm');
+  content = content.replace(dateValRegex, '"date":0,');
 
   return content;
 }

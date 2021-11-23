@@ -53,6 +53,14 @@ const cleanedFileContent = `
 </html>
 `;
 
+const jsonTest = {
+  date: 12348951,
+  lorem: {
+    data: 'yes',
+    yes: 1,
+  },
+};
+
 describe('Testing files duplication cleanup', () => {
   it('should cleanup duplicated files name', () => {
     expect(cleanupFile(`<link ref="icon" href="favicon_5.png">`)).to.equal(`<link ref="icon" href="favicon.png">`);
@@ -103,5 +111,19 @@ describe('Testing permissionHash cleanup', () => {
 describe('Testing all cleanups', () => {
   it('should do all cleanups in one string', () => {
     expect(cleanupFile(baseFileContent)).to.equal(cleanedFileContent);
+  });
+});
+
+describe('Testing JSON cleanup', () => {
+  it('should clean up JSON', () => {
+    const json = JSON.stringify(jsonTest);
+    const cleanedJson = JSON.stringify({
+      date: 0,
+      lorem: {
+        data: 'yes',
+        yes: 1,
+      },
+    });
+    expect(cleanupFile(json)).to.equal(cleanedJson);
   });
 });
