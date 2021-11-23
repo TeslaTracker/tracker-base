@@ -107,6 +107,8 @@ function processSource(source: ISource): Promise<void> {
         const teslaDb = await page.evaluate(injectFunc);
 
         dataToWrite = JSON.stringify(teslaDb);
+
+        dataToWrite = cleanupFile(dataToWrite);
       } else {
         // else, process the whole file
         dataToWrite = await response.text();
